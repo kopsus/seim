@@ -1,0 +1,23 @@
+import { Router } from "express";
+import {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from "../controllers/productController";
+import { verifyToken } from "../middleware/authMiddleware";
+import { uploadPhotos } from "../middleware/uploadMiddleware";
+
+const router = Router();
+
+// Public routes (Pelanggan bisa melihat katalog tanpa login)
+router.get("/", getProducts);
+router.get("/:id", getProductById);
+
+// Protected routes (Hanya Admin yang bisa menambah/ubah/hapus produk)
+router.post("/", verifyToken, uploadPhotos.array("photos", 5), createProduct);
+router.put("/:id", verifyToken, uploadPhotos.array("photos", 5), updateProduct);
+router.delete("/:id", verifyToken, deleteProduct);
+
+export default router;
