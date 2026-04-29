@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  KASIR
+}
+
+enum StatusProduk {
+  READY
+  SOLD
+}
+
+enum MetodeBayar {
+  TRANSFER
+  COD
+}
+
+enum StatusOrder {
+  PENDING
+  MENUNGGU_KONFIRMASI
+  SELESAI
+  BATAL
+}
+
+// 1. Tabel Users (Admin & Kasir)
+model User {
+  id            Int      @id @default(autoincrement())
+  username      String   @unique
+  password_hash String
+  role          Role     @default(KASIR)
+  
+  // Relasi: 1 Kasir bisa mengonfirmasi banyak Order
+  orders_confirmed Order[]
+
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+}
+
+// 2. Tabel Customers (Data Pelanggan)
+model Customer {
+  id          Int      @id @default(autoincrement())
+  nama        String
+  no_whatsapp String?  
+  alamat      String?  @db.Text
+  
+  // Relasi: 1 Customer bisa punya banyak Order
+  orders      Order[]
+
+  created_at  DateTime @default(now())
+}
+
+model Kategori {
+  id            Int       @id @default(autoincrement())
+  nama_kategori String    @unique
+  deskripsi     String?   
+  
+  // Relasi: 1 Kategori bisa memiliki banyak Produk
+  products      Product[] 
+
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+}
+
+// 3. Tabel Products (Katalog Sepatu)
+model Product {
+  id          Int          @id @default(autoincrement())
+  kategori_id Int          
+  nama_produk String
+  deskripsi   String       @db.Text
+  kondisi     String
+  size        String
+  harga       Decimal      @db.Decimal(10, 2)
+  status      StatusProduk @default(READY)
+  badge       String?      
+  foto        Json         
+  
+  // Relasi ke Tabel Kategori
+  kategori    Kategori     @relation(fields: [kategori_id], references: [id])
+  order_items OrderItem[]
+
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+}
+
+// 4. Tabel Orders (Transaksi Utama)
+model Order {
+  id                String      @id @default(uuid()) 
+  customer_id       Int
+  total_harga       Decimal     @db.Decimal(10, 2)
+  metode_pembayaran MetodeBayar
+  tanggal_cod       DateTime?   // Opsional, hanya jika COD
+  bukti_tf_url      String?     // Opsional, hanya jika Transfer
+  status_order      StatusOrder @default(PENDING)
+  kasir_id          Int?        // Kasir yang konfirmasi
+
+  // Relasi
+  customer          Customer    @relation(fields: [customer_id], references: [id])
+  kasir             User?       @relation(fields: [kasir_id], references: [id])
+  items             OrderItem[] 
+
+  created_at        DateTime    @default(now())
+}
+
+// 5. Tabel Order_Items (Isi Keranjang)
+model OrderItem {
+  id             Int     @id @default(autoincrement())
+  order_id       String
+  product_id     Int
+  harga_saat_beli Decimal @db.Decimal(10, 2)
+
+  // Relasi
+  order          Order   @relation(fields: [order_id], references: [id])
+  product        Product @relation(fields: [product_id], references: [id])
+}
