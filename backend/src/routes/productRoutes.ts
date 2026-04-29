@@ -6,7 +6,7 @@ import {
   updateProduct,
   deleteProduct,
 } from "../controllers/productController";
-import { verifyToken } from "../middleware/authMiddleware";
+import { authorizeRoles, verifyToken } from "../middleware/authMiddleware";
 import { uploadPhotos } from "../middleware/uploadMiddleware";
 
 const router = Router();
@@ -16,8 +16,20 @@ router.get("/", getProducts);
 router.get("/:id", getProductById);
 
 // Protected routes (Hanya Admin yang bisa menambah/ubah/hapus produk)
-router.post("/", verifyToken, uploadPhotos.array("photos", 5), createProduct);
-router.put("/:id", verifyToken, uploadPhotos.array("photos", 5), updateProduct);
-router.delete("/:id", verifyToken, deleteProduct);
+router.post(
+  "/",
+  verifyToken,
+  authorizeRoles("ADMIN"),
+  uploadPhotos.array("photos", 5),
+  createProduct,
+);
+router.put(
+  "/:id",
+  verifyToken,
+  authorizeRoles("ADMIN"),
+  uploadPhotos.array("photos", 5),
+  updateProduct,
+);
+router.delete("/:id", verifyToken, authorizeRoles("ADMIN"), deleteProduct);
 
 export default router;

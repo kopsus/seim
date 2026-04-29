@@ -33,3 +33,21 @@ export const verifyToken = (
       .json({ message: "Tiket (Token) tidak valid atau sudah kedaluwarsa!" });
   }
 };
+
+export const authorizeRoles = (...allowedRoles: string[]) => {
+  return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    if (!req.user || !req.user.role) {
+      res.status(403).json({ message: "Access denied. User role not found." });
+      return;
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      res.status(403).json({
+        message: "Access denied. You do not have permission for this action.",
+      });
+      return;
+    }
+
+    next();
+  };
+};

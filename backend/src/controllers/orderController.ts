@@ -131,3 +131,71 @@ export const uploadPaymentReceipt = async (
     });
   }
 };
+
+// GET: Fetch all orders (Protected - For Cashier/Admin)
+export const getOrders = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const orders = await prisma.order.findMany({
+      include: {
+        customer: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    res.status(200).json({ data: orders });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch orders", error });
+  }
+};
+
+// PUT: Update order status (Confirm / Cancel)
+export const updateOrderStatus = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const orderId = req.params.id as string;
+    const { status } = req.body;
+
+    const result = await prisma.$transaction(async (tx) => {
+      const updatedOrder = await tx.order.update({
+        where: { id: orderId },
+        data: { status_order: status },
+      });
+
+      if (status === "SELESAI" || status === "BATAL") {
+        const orderItems = await tx.orderItem.findMany({
+          where: { order_id: orderId },
+        });
+
+        const productIds = orderItems.map((item) => item.product_id);
+
+        const targetProductStatus = status === "SELESAI" ? "SOLD" : "READY";
+
+        await tx.product.updateMany({
+          where: { id: { in: productIds } },
+          data: { status: targetProductStatus },
+        });
+      }
+
+      return updatedOrder;
+    });
+
+    res.status(200).json({
+      message: `Order status successfully updated to ${status}`,
+      data: result,
+    });
+  } catch (error: any) {
+    console.error("Update Order Status Error:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to update order status", error: error.message });
+  }
+};

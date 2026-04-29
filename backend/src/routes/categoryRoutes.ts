@@ -5,13 +5,13 @@ import {
   getCategories,
   updateCategory,
 } from "../controllers/categoryController";
-import { verifyToken } from "../middleware/authMiddleware";
+import { authorizeRoles, verifyToken } from "../middleware/authMiddleware";
 
 const router = Router();
 
 router.get("/", getCategories);
-router.post("/", verifyToken, createCategory);
-router.put("/:id", verifyToken, updateCategory);
-router.delete("/:id", verifyToken, deleteCategory);
+router.post("/", verifyToken, authorizeRoles("ADMIN"), createCategory);
+router.put("/:id", verifyToken, authorizeRoles("ADMIN"), updateCategory);
+router.delete("/:id", verifyToken, authorizeRoles("ADMIN"), deleteCategory);
 
 export default router;
