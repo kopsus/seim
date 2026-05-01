@@ -161,3 +161,33 @@ export const changePassword = async (
     res.status(500).json({ message: "Gagal mengubah password", error });
   }
 };
+
+// GET: Ambil profil user yang sedang login (Bisa diakses Admin dan Kasir)
+export const getProfile = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const userId = (req as any).user.userId;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        role: true,
+        created_at: true,
+      },
+    });
+
+    if (!user) {
+      res.status(404).json({ message: "User tidak ditemukan." });
+      return;
+    }
+
+    res.status(200).json({ data: user });
+  } catch (error) {
+    console.error("Get Profile Error:", error);
+    res.status(500).json({ message: "Gagal mengambil profil user", error });
+  }
+};

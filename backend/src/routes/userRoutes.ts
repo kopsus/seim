@@ -5,6 +5,7 @@ import {
   updateUser,
   deleteUser,
   changePassword,
+  getProfile,
 } from "../controllers/userController";
 import {
   changePasswordSchema,
@@ -16,6 +17,7 @@ import { validateBody } from "../middleware/validationMiddleware";
 
 const router = Router();
 
+router.get("/profile", verifyToken, getProfile);
 router.put(
   "/change-password",
   verifyToken,
