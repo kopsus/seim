@@ -3,20 +3,27 @@ import * as bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
-async function main() {
-  const hashedPassword = await bcrypt.hash("admin123", 10);
+async function createUser(
+  username: string,
+  password: string,
+  role: "ADMIN" | "KASIR",
+) {
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-  const admin = await prisma.user.upsert({
-    where: { username: "admin" },
+  return prisma.user.upsert({
+    where: { username },
     update: {},
     create: {
-      username: "admin",
+      username,
       password_hash: hashedPassword,
-      role: "ADMIN",
+      role,
     },
   });
+}
 
-  console.log("Akun Admin berhasil dibuat:", admin.username);
+async function main() {
+  await createUser("admin", "admin123", "ADMIN");
+  await createUser("kasir", "kasir123", "KASIR");
 }
 
 main()
