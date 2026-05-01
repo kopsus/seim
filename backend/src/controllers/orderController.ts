@@ -135,21 +135,55 @@ export const uploadPaymentReceipt = async (
 // GET: Fetch all orders (Protected - For Cashier/Admin)
 export const getOrders = async (req: Request, res: Response): Promise<void> => {
   try {
-    const orders = await prisma.order.findMany({
-      include: {
-        customer: true,
-        items: {
-          include: {
-            product: true,
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = parseInt(req.query.limit as string, 10) || 10;
+    const search = req.query.search as string;
+    const status = req.query.status as string;
+    const skip = (page - 1) * limit;
+    const whereClause: any = {};
+
+    if (status) {
+      whereClause.status_order = status;
+    }
+
+    if (search) {
+      whereClause.customer = {
+        OR: [
+          { nama: { contains: search } },
+          { no_whatsapp: { contains: search } },
+        ],
+      };
+    }
+
+    const [orders, totalItems] = await prisma.$transaction([
+      prisma.order.findMany({
+        where: whereClause,
+        skip: skip,
+        take: limit,
+        include: {
+          customer: true,
+          items: {
+            include: {
+              product: true,
+            },
           },
         },
-      },
-      orderBy: {
-        created_at: "desc",
+        orderBy: {
+          created_at: "desc",
+        },
+      }),
+      prisma.order.count({ where: whereClause }),
+    ]);
+
+    res.status(200).json({
+      data: orders,
+      meta: {
+        totalItems: totalItems,
+        currentPage: page,
+        totalPages: Math.ceil(totalItems / limit),
+        itemsPerPage: limit,
       },
     });
-
-    res.status(200).json({ data: orders });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch orders", error });
   }

@@ -7,11 +7,13 @@ import {
 } from "../controllers/orderController";
 import { uploadReceipt } from "../middleware/uploadMiddleware";
 import { authorizeRoles, verifyToken } from "../middleware/authMiddleware";
+import { checkoutSchema } from "../validations/orderValidation";
+import { validateBody } from "../middleware/validationMiddleware";
 
 const router = Router();
 
 // PUBLIC ROUTES (Untuk Pelanggan)
-router.post("/checkout", checkout);
+router.post("/checkout", validateBody(checkoutSchema), checkout);
 router.post(
   "/:id/upload-receipt",
   uploadReceipt.single("receipt"),
