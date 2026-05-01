@@ -99,7 +99,7 @@ export const createProduct = async (
     }
 
     const photoPaths = files.map(
-      (file) => `/uploads/products/${file.filename}`,
+      (file) => `${process.env.UPLOAD_PATH_PRODUCTS}/${file.filename}`,
     );
 
     const newProduct = await prisma.product.create({
@@ -132,37 +132,78 @@ export const updateProduct = async (
 ): Promise<void> => {
   try {
     const productId = parseInt(req.params.id as string, 10);
-    const {
-      categoryId,
-      name,
-      description,
-      condition,
-      size,
-      price,
-      status,
-      badge,
-      photos,
-    } = req.body;
+
+    const existingProduct = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!existingProduct) {
+      res.status(404).json({ message: "Product not found" });
+      return;
+    }
+
+    const categoryId = req.body.categoryId
+      ? parseInt(req.body.categoryId as string, 10)
+      : undefined;
+    const price = req.body.price
+      ? parseFloat(req.body.price as string)
+      : undefined;
+    const { name, description, condition, size, status, badge } = req.body;
+
+    let finalPhotoPaths = existingProduct.foto as string[];
+    const originalPhotos = existingProduct.foto as string[];
+    const files = req.files as Express.Multer.File[];
+
+    if (req.body.retainedPhotos !== undefined || (files && files.length > 0)) {
+      let retained: string[] = [];
+      if (req.body.retainedPhotos) {
+        retained = Array.isArray(req.body.retainedPhotos)
+          ? req.body.retainedPhotos
+          : [req.body.retainedPhotos];
+      }
+
+      const newPhotoPaths =
+        files && files.length > 0
+          ? files.map(
+              (file) => `${process.env.UPLOAD_PATH_PRODUCTS}/${file.filename}`,
+            )
+          : [];
+
+      finalPhotoPaths = [...retained, ...newPhotoPaths];
+
+      const photosToDelete = originalPhotos.filter(
+        (oldUrl) => !retained.includes(oldUrl),
+      );
+
+      photosToDelete.forEach((photoUrl) => {
+        const fullPath = path.join(process.cwd(), "public", photoUrl);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+      });
+    }
 
     const updatedProduct = await prisma.product.update({
       where: { id: productId },
       data: {
-        kategori_id: categoryId,
-        nama_produk: name,
-        deskripsi: description,
-        kondisi: condition,
-        size: size,
-        harga: price,
-        status: status,
-        badge: badge,
-        foto: photos,
+        kategori_id: categoryId || existingProduct.kategori_id,
+        nama_produk: name || existingProduct.nama_produk,
+        deskripsi: description || existingProduct.deskripsi,
+        kondisi: condition || existingProduct.kondisi,
+        size: size || existingProduct.size,
+        harga: price || existingProduct.harga,
+        status: status || existingProduct.status,
+        badge: badge || existingProduct.badge,
+        foto: finalPhotoPaths,
       },
     });
 
-    res
-      .status(200)
-      .json({ message: "Product successfully updated!", data: updatedProduct });
+    res.status(200).json({
+      message: "Product successfully updated!",
+      data: updatedProduct,
+    });
   } catch (error) {
+    console.error("Update Product Error:", error);
     res.status(500).json({ message: "Failed to update product", error });
   }
 };
