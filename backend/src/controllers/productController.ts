@@ -9,12 +9,50 @@ export const getProducts = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const products = await prisma.product.findMany({
-      include: {
-        kategori: true,
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = parseInt(req.query.limit as string, 10) || 12;
+    const search = req.query.search as string;
+    const size = req.query.size as string;
+    const categoryId = req.query.categoryId
+      ? parseInt(req.query.categoryId as string, 10)
+      : undefined;
+    const status = req.query.status as string;
+    const skip = (page - 1) * limit;
+    const whereClause: any = {};
+
+    if (search) {
+      whereClause.nama_produk = { contains: search };
+    }
+    if (size) {
+      whereClause.size = size;
+    }
+    if (categoryId) {
+      whereClause.kategori_id = categoryId;
+    }
+    if (status) {
+      whereClause.status = status;
+    }
+
+    const [products, totalItems] = await prisma.$transaction([
+      prisma.product.findMany({
+        where: whereClause,
+        skip: skip,
+        take: limit,
+        include: { kategori: true },
+        orderBy: { created_at: "desc" },
+      }),
+      prisma.product.count({ where: whereClause }),
+    ]);
+
+    res.status(200).json({
+      data: products,
+      meta: {
+        totalItems: totalItems,
+        currentPage: page,
+        totalPages: Math.ceil(totalItems / limit),
+        itemsPerPage: limit,
       },
     });
-    res.status(200).json({ data: products });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch products", error });
   }
