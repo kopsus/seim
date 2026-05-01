@@ -11,11 +11,9 @@ import { uploadPhotos } from "../middleware/uploadMiddleware";
 
 const router = Router();
 
-// Public routes (Pelanggan bisa melihat katalog tanpa login)
 router.get("/", getProducts);
 router.get("/:id", getProductById);
 
-// Protected routes (Hanya Admin yang bisa menambah/ubah/hapus produk)
 router.post(
   "/",
   verifyToken,
