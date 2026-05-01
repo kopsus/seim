@@ -14,3 +14,10 @@ export const updateUserSchema = z.object({
   username: z.string().min(3, "Username minimal 3 karakter").optional(),
   role: z.enum(["ADMIN", "KASIR"]).optional(),
 });
+
+export const changePasswordSchema = z.object({
+  oldPassword: z.string({ message: "Password lama wajib diisi" }),
+  newPassword: z
+    .string({ message: "Password baru wajib diisi" })
+    .min(6, "Password baru minimal 6 karakter"),
+});

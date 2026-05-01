@@ -4,8 +4,10 @@ import {
   createUser,
   updateUser,
   deleteUser,
+  changePassword,
 } from "../controllers/userController";
 import {
+  changePasswordSchema,
   createUserSchema,
   updateUserSchema,
 } from "../validations/userValidation";
@@ -13,6 +15,13 @@ import { authorizeRoles, verifyToken } from "../middleware/authMiddleware";
 import { validateBody } from "../middleware/validationMiddleware";
 
 const router = Router();
+
+router.put(
+  "/change-password",
+  verifyToken,
+  validateBody(changePasswordSchema),
+  changePassword,
+);
 
 router.use(verifyToken, authorizeRoles("ADMIN"));
 

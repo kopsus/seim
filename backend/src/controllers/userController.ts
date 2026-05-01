@@ -116,3 +116,48 @@ export const deleteUser = async (
     res.status(500).json({ message: "Gagal menghapus user", error });
   }
 };
+
+// PUT: Ganti password akun sendiri (Bisa diakses Admin dan Kasir)
+export const changePassword = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const userId = (req as any).user.userId;
+    const { oldPassword, newPassword } = req.body;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      res.status(404).json({ message: "User tidak ditemukan" });
+      return;
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
+
+    if (!isMatch) {
+      res
+        .status(400)
+        .json({ message: "Password lama yang Anda masukkan salah." });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password_hash: hashedNewPassword },
+    });
+
+    res.status(200).json({
+      message:
+        "Password berhasil diubah. Silakan gunakan password baru untuk login selanjutnya.",
+    });
+  } catch (error) {
+    console.error("Change Password Error:", error);
+    res.status(500).json({ message: "Gagal mengubah password", error });
+  }
+};
