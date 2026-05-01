@@ -93,6 +93,25 @@ export const createProduct = async (
 
     const files = req.files as Express.Multer.File[];
 
+    const existingProduct = await prisma.product.findFirst({
+      where: { nama_produk: name },
+    });
+
+    if (existingProduct) {
+      if (files && files.length > 0) {
+        files.forEach((file) => {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        });
+      }
+
+      res.status(400).json({
+        message: `Produk dengan nama "${name}" sudah terdaftar di sistem. Harap gunakan nama lain jika ini produk yang berbeda.`,
+      });
+      return;
+    }
+
     if (!files || files.length === 0) {
       res.status(400).json({ message: "At least one photo is required" });
       return;
