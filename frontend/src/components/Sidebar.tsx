@@ -1,4 +1,8 @@
+// src/components/Sidebar.tsx
+"use client"; // Wajib ditambahkan karena kita menggunakan hook usePathname
+
 import Link from "next/link";
+import { usePathname } from "next/navigation"; // Import hook untuk membaca URL aktif
 import {
   Home,
   Library,
@@ -11,11 +15,33 @@ import {
 } from "lucide-react";
 
 interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar({
+  isOpen = false,
+  onClose = () => {},
+}: SidebarProps) {
+  // Ambil rute URL saat ini (contoh: '/' atau '/katalog')
+  const pathname = usePathname();
+
+  // Fungsi bantuan untuk menentukan warna tombol
+  // Jika rute saat ini sama dengan rute menu, berikan warna emas. Jika tidak, warna transparan.
+  const getMenuClass = (path: string) => {
+    const isActive = pathname === path;
+    return isActive
+      ? "flex items-center space-x-3 text-white bg-[#B88E2F] px-4 py-3 rounded-lg transition-colors shadow-lg"
+      : "flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors";
+  };
+
+  const getSubMenuClass = (path: string) => {
+    const isActive = pathname === path;
+    return isActive
+      ? "flex items-center space-x-3 text-[#B88E2F] font-bold px-4 py-2 rounded-lg transition-colors bg-[#B88E2F]/10"
+      : "flex items-center space-x-3 text-gray-400 hover:text-white px-4 py-2 rounded-lg transition-colors";
+  };
+
   return (
     <>
       {isOpen && (
@@ -24,6 +50,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           onClick={onClose}
         ></div>
       )}
+
       <aside
         className={`w-64 h-screen bg-[#121212] text-white flex flex-col border-r border-gray-800 fixed left-0 top-0 z-50 transform transition-transform duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "-translate-x-full"} 
@@ -45,11 +72,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-4 space-y-2 mt-4">
-          <Link
-            href="/"
-            onClick={onClose}
-            className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors"
-          >
+          <Link href="/" onClick={onClose} className={getMenuClass("/")}>
             <Home size={20} />
             <span className="font-medium">Beranda</span>
           </Link>
@@ -57,7 +80,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link
             href="/katalog"
             onClick={onClose}
-            className="flex items-center space-x-3 text-white bg-[#B88E2F] px-4 py-3 rounded-lg transition-colors shadow-lg"
+            className={getMenuClass("/katalog")}
           >
             <Library size={20} />
             <span className="font-medium">Katalog</span>
@@ -72,7 +95,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link
             href="/kategori/sneakers"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white px-4 py-2 rounded-lg transition-colors"
+            className={getSubMenuClass("/kategori/sneakers")}
           >
             <Layers size={18} />
             <span className="text-sm">Sneakers</span>
@@ -80,7 +103,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link
             href="/kategori/casual"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white px-4 py-2 rounded-lg transition-colors"
+            className={getSubMenuClass("/kategori/casual")}
           >
             <Layers size={18} />
             <span className="text-sm">Casual</span>
@@ -88,7 +111,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link
             href="/kategori/sport"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white px-4 py-2 rounded-lg transition-colors"
+            className={getSubMenuClass("/kategori/sport")}
           >
             <Layers size={18} />
             <span className="text-sm">Sport</span>
@@ -99,7 +122,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link
             href="/promo"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white px-4 py-2 rounded-lg transition-colors"
+            className={getSubMenuClass("/promo")}
           >
             <Tag size={18} />
             <span className="text-sm">Promo</span>
@@ -107,7 +130,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link
             href="/cara-order"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white px-4 py-2 rounded-lg transition-colors"
+            className={getSubMenuClass("/cara-order")}
           >
             <HelpCircle size={18} />
             <span className="text-sm">Cara Order</span>
@@ -115,7 +138,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link
             href="/tentang-kami"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white px-4 py-2 rounded-lg transition-colors"
+            className={getSubMenuClass("/tentang-kami")}
           >
             <Info size={18} />
             <span className="text-sm">Tentang Kami</span>
@@ -123,7 +146,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link
             href="/kontak"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white px-4 py-2 rounded-lg transition-colors"
+            className={getSubMenuClass("/kontak")}
           >
             <Phone size={18} />
             <span className="text-sm">Kontak</span>
