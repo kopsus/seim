@@ -1,4 +1,3 @@
-// src/app/(public)/cara-order/page.tsx
 import Link from "next/link";
 import {
   Search,
@@ -69,7 +68,7 @@ export default function CaraOrderPage() {
             className="flex flex-col md:flex-row bg-[#1A1A1A] p-6 md:p-8 rounded-2xl border border-gray-800 hover:border-[#B88E2F] transition-colors"
           >
             {/* Bagian Ikon & Nomor */}
-            <div className="flex items-center md:items-start mb-4 md:mb-0 md:mr-8 flex-shrink-0">
+            <div className="flex items-center md:items-start mb-4 md:mb-0 md:mr-8 shrink-0">
               <div className="w-14 h-14 bg-[#B88E2F] rounded-xl flex items-center justify-center shadow-lg shadow-[#B88E2F]/20 relative">
                 {step.icon}
                 <span className="absolute -top-2 -right-2 bg-gray-900 text-[#B88E2F] text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border border-[#B88E2F]">
