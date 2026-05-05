@@ -18,13 +18,12 @@ export default function ManajemenProdukPage() {
       harga: 599000,
       status: "READY",
       badge: "NEW",
-      foto: "/dummy-shoe.jpg",
+      foto: "https://images.tokopedia.net/img/cache/700/VqbcmM/2024/10/19/373fcf82-b274-4d62-bd85-5d5ee1c4c3fc.jpg.webp",
     },
   ];
 
   return (
     <div className="w-full relative">
-      {/* HEADER HALAMAN */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Manajemen Produk</h1>
@@ -33,7 +32,6 @@ export default function ManajemenProdukPage() {
           </p>
         </div>
 
-        {/* Tombol pemicu buka Modal */}
         <button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center justify-center bg-[#B88E2F] hover:bg-[#9A7526] text-white px-5 py-2.5 rounded-lg font-medium transition-colors w-full md:w-auto"
@@ -43,7 +41,6 @@ export default function ManajemenProdukPage() {
         </button>
       </div>
 
-      {/* AREA PENCARIAN & TABEL (Sama seperti sebelumnya) */}
       <div className="bg-[#1A1A1A] p-4 rounded-xl border border-gray-800 flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search
@@ -109,7 +106,7 @@ export default function ManajemenProdukPage() {
                           src={product.foto}
                           alt={product.nama_produk}
                           fill
-                          className="object-contain p-1"
+                          className="object-contain"
                         />
                       </div>
                       <div>
@@ -151,9 +148,7 @@ export default function ManajemenProdukPage() {
         </div>
       </div>
 
-      {/* ========================================== */}
       {/* 2. KOMPONEN MODAL POP-UP TAMBAH PRODUK */}
-      {/* ========================================== */}
       <ModalTambahProduk
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
