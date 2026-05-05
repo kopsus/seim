@@ -4,15 +4,17 @@ import { useState } from "react";
 import Image from "next/image";
 import { Plus, Search, Filter, Edit, Trash2, Eye } from "lucide-react";
 import { formatRupiah } from "@/utils/formatRupiah";
-import ModalTambahProduk from "@/components/dashboard/ModalTambahProduk";
-import ModalDetailProduk from "@/components/dashboard/ModalDetailProduk";
-import ModalEditProduk from "@/components/dashboard/ModalEditProduk";
+import ModalTambahProduk from "@/components/dashboard/ModalTambahProduct";
+import ModalDetailProduk from "@/components/dashboard/ModalDetailProduct";
+import ModalEditProduk from "@/components/dashboard/ModalEditProduct";
 import { Product } from "@/types/product";
+import ModalDeleteProduk from "@/components/dashboard/ModalDeleteProduct";
 
 export default function ManajemenProdukPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   const dummyProducts: Product[] = [
@@ -49,6 +51,11 @@ export default function ManajemenProdukPage() {
   const handleEditProduct = (product: any) => {
     setSelectedProduct(product);
     setIsEditModalOpen(true);
+  };
+
+  const handleDeleteProduct = (product: any) => {
+    setSelectedProduct(product);
+    setIsDeleteModalOpen(true);
   };
 
   return (
@@ -181,6 +188,7 @@ export default function ManajemenProdukPage() {
                         <Edit size={18} />
                       </button>
                       <button
+                        onClick={() => handleDeleteProduct(product)}
                         className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
                         title="Hapus Produk"
                       >
@@ -207,6 +215,12 @@ export default function ManajemenProdukPage() {
       <ModalEditProduk
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
+        product={selectedProduct}
+      />
+
+      <ModalDeleteProduk
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
         product={selectedProduct}
       />
     </div>
