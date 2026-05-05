@@ -1,6 +1,10 @@
-import { Heart, ShoppingCart } from "lucide-react";
+"use client";
+
+import { CheckCircle, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
+import { useCartStore } from "@/store/useCartStore";
 
 interface ProductCardProps {
   id: number;
@@ -21,6 +25,10 @@ export default function ProductCard({
   imageUrl,
   badge,
 }: ProductCardProps) {
+  const { addItem } = useCartStore();
+
+  const [isAdded, setIsAdded] = useState(false);
+
   const formatRupiah = (number: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -29,9 +37,25 @@ export default function ProductCard({
     }).format(number);
   };
 
+  const handleAddToCart = () => {
+    addItem({
+      id: id,
+      name: name,
+      price: price,
+      size: size,
+      imageUrl: imageUrl,
+    });
+
+    setIsAdded(true);
+    setTimeout(() => setIsAdded(false), 1500);
+  };
+
   return (
     <div className="bg-[#1A1A1A] rounded-xl overflow-hidden border border-gray-800 hover:border-[#B88E2F] transition-all group flex flex-col">
-      <div className="relative h-48 md:h-64 bg-gray-900 flex items-center justify-center overflow-hidden p-2 md:p-4">
+      <Link
+        href={`/produk/${id}`}
+        className="relative h-48 md:h-64 bg-gray-900 flex items-center justify-center overflow-hidden"
+      >
         {badge && (
           <span
             className={`absolute top-2 left-2 md:top-4 md:left-4 text-[8px] md:text-[10px] font-bold px-2 py-1 rounded z-10 ${
@@ -44,9 +68,12 @@ export default function ProductCard({
           </span>
         )}
 
-        <button className="absolute top-2 right-2 md:top-4 md:right-4 text-gray-400 hover:text-red-500 transition-colors z-10">
+        {/* <button
+          onClick={(e) => e.preventDefault()}
+          className="absolute top-2 right-2 md:top-4 md:right-4 text-gray-400 hover:text-red-500 transition-colors z-10"
+        >
           <Heart size={18} className="md:w-5 md:h-5" />
-        </button>
+        </button> */}
 
         <div className="relative w-full h-full">
           <Image
@@ -54,10 +81,10 @@ export default function ProductCard({
             alt={name}
             fill
             sizes="(max-width: 768px) 50vw, 25vw"
-            className="object-contain group-hover:scale-105 transition-transform duration-300"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </div>
-      </div>
+      </Link>
 
       <div className="p-3 md:p-4 flex flex-col flex-1">
         <Link
@@ -76,8 +103,19 @@ export default function ProductCard({
           <span className="font-bold text-sm md:text-xl text-white truncate mr-2">
             {formatRupiah(price)}
           </span>
-          <button className="bg-gray-800 hover:bg-[#B88E2F] text-white p-1.5 md:p-2.5 rounded-lg transition-colors shrink-0">
-            <ShoppingCart size={16} className="md:w-4.5 md:h-4.5" />
+
+          {/* Tombol Keranjang yang sudah disambungkan ke fungsi handleAddToCart */}
+          <button
+            onClick={handleAddToCart}
+            className={`${
+              isAdded ? "bg-green-600" : "bg-gray-800 hover:bg-[#B88E2F]"
+            } text-white p-1.5 md:p-2.5 rounded-lg transition-colors shrink-0`}
+          >
+            {isAdded ? (
+              <CheckCircle size={16} className="md:w-4.5 md:h-4.5" />
+            ) : (
+              <ShoppingCart size={16} className="md:w-4.5 md:h-4.5" />
+            )}
           </button>
         </div>
       </div>

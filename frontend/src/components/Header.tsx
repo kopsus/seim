@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Bell, ShoppingCart, User, Menu } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, Bell, ShoppingCart, Menu } from "lucide-react";
 import CartDrawer from "./CartDrawer";
+import { useCartStore } from "@/store/useCartStore";
 
 interface HeaderProps {
   onOpenMenu: () => void;
@@ -10,6 +11,19 @@ interface HeaderProps {
 
 export default function Header({ onOpenMenu }: HeaderProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const items = useCartStore((state) => state.items);
+
+  const totalItems = items.reduce((total, item) => total + item.quantity, 0);
+
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <>
@@ -21,7 +35,6 @@ export default function Header({ onOpenMenu }: HeaderProps) {
           >
             <Menu size={24} />
           </button>
-
           <div className="relative w-full">
             <input
               type="text"
@@ -46,17 +59,19 @@ export default function Header({ onOpenMenu }: HeaderProps) {
             className="text-gray-400 hover:text-white transition-colors relative"
           >
             <ShoppingCart size={22} />
-            <span className="absolute -top-2 -right-2 bg-[#B88E2F] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-[#0A0A0A]">
-              2
-            </span>
+            {/* Tampilkan badge HANYA jika ada barang di keranjang */}
+            {isMounted && totalItems > 0 && (
+              <span className="absolute -top-2 -right-2 bg-[#B88E2F] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-[#0A0A0A]">
+                {totalItems}
+              </span>
+            )}
           </button>
 
-          <button className="text-gray-400 hover:text-white transition-colors">
+          {/* <button className="text-gray-400 hover:text-white transition-colors">
             <User size={22} />
-          </button>
+          </button> */}
         </div>
       </header>
-
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );
