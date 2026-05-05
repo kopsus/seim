@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { useCartStore } from "@/store/useCartStore";
+import { formatRupiah } from "@/utils/formatRupiah";
 
 interface ProductCardProps {
   id: number;
@@ -26,16 +27,7 @@ export default function ProductCard({
   badge,
 }: ProductCardProps) {
   const { addItem } = useCartStore();
-
   const [isAdded, setIsAdded] = useState(false);
-
-  const formatRupiah = (number: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(number);
-  };
 
   const handleAddToCart = () => {
     addItem({
