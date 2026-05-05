@@ -4,11 +4,11 @@ import { useState } from "react";
 import Image from "next/image";
 import { Plus, Search, Filter, Edit, Trash2, Eye } from "lucide-react";
 import { formatRupiah } from "@/utils/formatRupiah";
-import ModalTambahProduk from "@/components/dashboard/ModalTambahProduct";
-import ModalDetailProduk from "@/components/dashboard/ModalDetailProduct";
-import ModalEditProduk from "@/components/dashboard/ModalEditProduct";
+import ModalTambahProduk from "@/components/dashboard/product/ModalTambahProduct";
+import ModalDetailProduk from "@/components/dashboard/product/ModalDetailProduct";
+import ModalEditProduk from "@/components/dashboard/product/ModalEditProduct";
 import { Product } from "@/types/product";
-import ModalDeleteProduk from "@/components/dashboard/ModalDeleteProduct";
+import ModalDeleteProduk from "@/components/dashboard/product/ModalDeleteProduct";
 
 export default function ManajemenProdukPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);

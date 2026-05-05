@@ -1,4 +1,3 @@
-// src/components/DashboardSidebar.tsx
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -25,7 +24,6 @@ export default function DashboardSidebar({
 }: DashboardSidebarProps) {
   return (
     <>
-      {/* Overlay Gelap untuk HP */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-60 z-40 md:hidden"
@@ -70,7 +68,7 @@ export default function DashboardSidebar({
           </div>
 
           <Link
-            href="/dashboard/produk"
+            href="/dashboard/product"
             onClick={onClose}
             className="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-2.5 rounded-lg transition-colors"
           >
@@ -78,7 +76,7 @@ export default function DashboardSidebar({
             <span className="text-sm">Produk</span>
           </Link>
           <Link
-            href="/dashboard/kategori"
+            href="/dashboard/category"
             onClick={onClose}
             className="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-2.5 rounded-lg transition-colors"
           >
@@ -99,7 +97,6 @@ export default function DashboardSidebar({
           >
             <ShoppingBag size={18} />
             <span className="text-sm">Pesanan</span>
-            {/* Badge Notifikasi Pesanan Masuk */}
             <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
               3
             </span>
@@ -149,7 +146,6 @@ export default function DashboardSidebar({
           </Link>
         </nav>
 
-        {/* Tombol Logout di paling bawah */}
         <div className="p-4 mt-auto border-t border-gray-800">
           <button className="flex items-center space-x-3 text-red-400 hover:text-red-300 hover:bg-red-900/20 w-full px-4 py-3 rounded-lg transition-colors">
             <LogOut size={18} />
