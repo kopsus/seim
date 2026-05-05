@@ -3,11 +3,12 @@
 import Image from "next/image";
 import { X } from "lucide-react";
 import { formatRupiah } from "@/utils/formatRupiah";
+import { Product } from "@/types/product";
 
 interface ModalDetailProdukProps {
   isOpen: boolean;
   onClose: () => void;
-  product: any;
+  product: Product;
 }
 
 export default function ModalDetailProduk({
@@ -44,7 +45,7 @@ export default function ModalDetailProduk({
                 </span>
               )}
               <Image
-                src={product.foto}
+                src={product.foto[0]}
                 alt={product.nama_produk}
                 fill
                 className="object-contain"
@@ -60,7 +61,7 @@ export default function ModalDetailProduk({
               {product.nama_produk}
             </h1>
             <p className="text-2xl font-bold text-white mb-6 border-b border-gray-800 pb-6">
-              {formatRupiah(product.harga)}
+              {formatRupiah(product.harga ? Number(product.harga) : 0)}
             </p>
 
             <div className="grid grid-cols-2 gap-4 mb-6 text-sm">

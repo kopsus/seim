@@ -6,28 +6,49 @@ import { Plus, Search, Filter, Edit, Trash2, Eye } from "lucide-react";
 import { formatRupiah } from "@/utils/formatRupiah";
 import ModalTambahProduk from "@/components/dashboard/ModalTambahProduk";
 import ModalDetailProduk from "@/components/dashboard/ModalDetailProduk";
+import ModalEditProduk from "@/components/dashboard/ModalEditProduk";
+import { Product } from "@/types/product";
 
 export default function ManajemenProdukPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
-  const dummyProducts = [
+  const dummyProducts: Product[] = [
     {
-      id: 1,
-      nama_produk: "Air Retro High Black White",
-      kategori: { nama_kategori: "Sneakers" },
-      size: "42",
-      harga: 599000,
+      id: 7,
+      kategori_id: 2,
+      nama_produk: "Sepatu NB",
+      deskripsi: "Sepatu OG Convers",
+      kondisi: "New",
+      size: "40",
+      harga: "10000000",
       status: "READY",
-      badge: "NEW",
-      foto: "https://images.tokopedia.net/img/cache/700/VqbcmM/2024/10/19/373fcf82-b274-4d62-bd85-5d5ee1c4c3fc.jpg.webp",
+      badge: "Promo",
+      foto: [
+        "https://images.tokopedia.net/img/cache/700/VqbcmM/2024/10/19/373fcf82-b274-4d62-bd85-5d5ee1c4c3fc.jpg.webp",
+      ],
+      created_at: "2026-05-01T07:39:50.837Z",
+      updated_at: "2026-05-01T07:39:50.837Z",
+      kategori: {
+        id: 2,
+        nama_kategori: "Sneakers",
+        deskripsi: "Khusu Category Sepatu Sneakers",
+        created_at: "2026-04-29T12:36:23.492Z",
+        updated_at: "2026-04-29T12:36:23.492Z",
+      },
     },
   ];
 
   const handleViewDetail = (product: any) => {
     setSelectedProduct(product);
     setIsDetailModalOpen(true);
+  };
+
+  const handleEditProduct = (product: any) => {
+    setSelectedProduct(product);
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -39,7 +60,6 @@ export default function ManajemenProdukPage() {
             Kelola katalog sepatu, harga, dan ketersediaan stok.
           </p>
         </div>
-
         <button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center justify-center bg-[#B88E2F] hover:bg-[#9A7526] text-white px-5 py-2.5 rounded-lg font-medium transition-colors w-full md:w-auto"
@@ -79,7 +99,7 @@ export default function ManajemenProdukPage() {
         </div>
       </div>
 
-      <div className="bg-[#1A1A1A] rounded-xl border border-gray-800 overflow-hidden">
+      <div className="bg-[#1A1A1A] rounded-xl border border-gray-800 overflow-hidden mt-6">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-400">
             <thead className="bg-[#0A0A0A] text-gray-300 border-b border-gray-800">
@@ -111,7 +131,7 @@ export default function ManajemenProdukPage() {
                     <div className="flex items-center space-x-4">
                       <div className="relative w-12 h-12 bg-gray-900 rounded-lg overflow-hidden border border-gray-800">
                         <Image
-                          src={product.foto}
+                          src={product.foto[0]}
                           alt={product.nama_produk}
                           fill
                           className="object-contain"
@@ -128,11 +148,19 @@ export default function ManajemenProdukPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-white">{product.size}</td>
+
                   <td className="px-6 py-4 text-white font-medium">
-                    {formatRupiah(product.harga)}
+                    {formatRupiah(Number(product.harga))}
                   </td>
+
                   <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 text-[10px] font-bold rounded-full border bg-green-500/10 text-green-500 border-green-500/20">
+                    <span
+                      className={`px-2.5 py-1 text-[10px] font-bold rounded-full border ${
+                        product.status === "READY"
+                          ? "bg-green-500/10 text-green-500 border-green-500/20"
+                          : "bg-red-500/10 text-red-500 border-red-500/20"
+                      }`}
+                    >
                       {product.status}
                     </span>
                   </td>
@@ -141,13 +169,21 @@ export default function ManajemenProdukPage() {
                       <button
                         onClick={() => handleViewDetail(product)}
                         className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors"
+                        title="Lihat Detail"
                       >
                         <Eye size={18} />
                       </button>
-                      <button className="p-1.5 text-gray-400 hover:text-[#B88E2F] transition-colors">
+                      <button
+                        onClick={() => handleEditProduct(product)}
+                        className="p-1.5 text-gray-400 hover:text-[#B88E2F] transition-colors"
+                        title="Edit Produk"
+                      >
                         <Edit size={18} />
                       </button>
-                      <button className="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
+                      <button
+                        className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Hapus Produk"
+                      >
                         <Trash2 size={18} />
                       </button>
                     </div>
@@ -159,15 +195,18 @@ export default function ManajemenProdukPage() {
         </div>
       </div>
 
-      {/* 2. KOMPONEN MODAL POP-UP TAMBAH PRODUK */}
       <ModalTambahProduk
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
-
       <ModalDetailProduk
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
+        product={selectedProduct}
+      />
+      <ModalEditProduk
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
         product={selectedProduct}
       />
     </div>
