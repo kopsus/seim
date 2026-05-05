@@ -5,9 +5,12 @@ import Image from "next/image";
 import { Plus, Search, Filter, Edit, Trash2, Eye } from "lucide-react";
 import { formatRupiah } from "@/utils/formatRupiah";
 import ModalTambahProduk from "@/components/dashboard/ModalTambahProduk";
+import ModalDetailProduk from "@/components/dashboard/ModalDetailProduk";
 
 export default function ManajemenProdukPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   const dummyProducts = [
     {
@@ -21,6 +24,11 @@ export default function ManajemenProdukPage() {
       foto: "https://images.tokopedia.net/img/cache/700/VqbcmM/2024/10/19/373fcf82-b274-4d62-bd85-5d5ee1c4c3fc.jpg.webp",
     },
   ];
+
+  const handleViewDetail = (product: any) => {
+    setSelectedProduct(product);
+    setIsDetailModalOpen(true);
+  };
 
   return (
     <div className="w-full relative">
@@ -130,7 +138,10 @@ export default function ManajemenProdukPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end space-x-2">
-                      <button className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors">
+                      <button
+                        onClick={() => handleViewDetail(product)}
+                        className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors"
+                      >
                         <Eye size={18} />
                       </button>
                       <button className="p-1.5 text-gray-400 hover:text-[#B88E2F] transition-colors">
@@ -152,6 +163,12 @@ export default function ManajemenProdukPage() {
       <ModalTambahProduk
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      <ModalDetailProduk
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        product={selectedProduct}
       />
     </div>
   );
