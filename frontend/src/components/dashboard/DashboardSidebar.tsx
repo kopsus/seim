@@ -113,14 +113,14 @@ export default function DashboardSidebar({
               3
             </span>
           </Link>
-          <Link
+          {/* <Link
             href="/dashboard/promo"
             onClick={onClose}
             className={getMenuClass("/dashboard/promo")}
           >
             <Tag size={18} />
             <span className="text-sm">Promo</span>
-          </Link>
+          </Link> */}
           <Link
             href="/dashboard/jadwal-cod"
             onClick={onClose}
@@ -132,14 +132,14 @@ export default function DashboardSidebar({
 
           <div className="border-t border-gray-800 my-4" />
 
-          <Link
+          {/* <Link
             href="/dashboard/laporan"
             onClick={onClose}
             className={getMenuClass("/dashboard/laporan")}
           >
             <FileText size={18} />
             <span className="text-sm">Laporan</span>
-          </Link>
+          </Link> */}
           <Link
             href="/dashboard/user"
             onClick={onClose}
@@ -148,14 +148,14 @@ export default function DashboardSidebar({
             <Users size={18} />
             <span className="text-sm">Pengguna</span>
           </Link>
-          <Link
+          {/* <Link
             href="/dashboard/pengaturan"
             onClick={onClose}
             className={getMenuClass("/dashboard/pengaturan")}
           >
             <Settings size={18} />
             <span className="text-sm">Pengaturan</span>
-          </Link>
+          </Link> */}
         </nav>
 
         <div className="p-4 mt-auto border-t border-gray-800">

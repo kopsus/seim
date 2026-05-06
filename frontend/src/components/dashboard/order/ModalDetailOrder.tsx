@@ -4,24 +4,32 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { X, MapPin, CreditCard, Package } from "lucide-react";
 import { formatRupiah } from "@/utils/formatRupiah";
+import { formatDateTime } from "@/utils/formatDateTime";
 
-interface ModalDetailOrderProps {
+interface ModalDetailPesananProps {
   isOpen: boolean;
   onClose: () => void;
   order: any;
 }
 
-export default function ModalDetailOrder({
+export default function ModalDetailPesanan({
   isOpen,
   onClose,
   order,
-}: ModalDetailOrderProps) {
+}: ModalDetailPesananProps) {
   const [newStatus, setNewStatus] = useState("");
+  const [newCodDate, setNewCodDate] = useState("");
 
   useEffect(() => {
     if (order) {
       const timer = setTimeout(() => {
         setNewStatus(order.status_order);
+
+        if (order.tanggal_cod) {
+          setNewCodDate(order.tanggal_cod.substring(0, 16));
+        } else {
+          setNewCodDate("");
+        }
       }, 0);
 
       return () => clearTimeout(timer);
@@ -30,29 +38,21 @@ export default function ModalDetailOrder({
 
   if (!isOpen || !order) return null;
 
-  const formatDateTime = (dateString: string) => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const handleSaveData = () => {
+    console.log("Memanggil API untuk mengupdate order:", order.id);
+    console.log("Status disimpan:", newStatus);
+
+    if (order.metode_pembayaran === "COD") {
+      console.log("Tanggal COD disimpan:", newCodDate);
+    }
   };
 
-  const handleSaveStatus = () => {
-    console.log(
-      "Memanggil API: Mengubah status order",
-      order.id,
-      "menjadi:",
-      newStatus,
-    );
-    // TODO: Fetch/Axios API di sini
-
-    // Nanti setelah sukses, bisa munculkan notifikasi/toast
-  };
+  const isStatusChanged = newStatus !== order.status_order;
+  const isCodDateChanged =
+    order.metode_pembayaran === "COD" &&
+    newCodDate !==
+      (order.tanggal_cod ? order.tanggal_cod.substring(0, 16) : "");
+  const hasChanges = isStatusChanged || isCodDateChanged;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
@@ -116,7 +116,6 @@ export default function ModalDetailOrder({
                 <Package size={18} className="text-[#B88E2F]" /> Produk yang
                 Dipesan
               </h3>
-
               <div className="flex flex-col gap-4">
                 {order.items?.map((item: any, index: number) => (
                   <div
@@ -149,14 +148,19 @@ export default function ModalDetailOrder({
           </div>
 
           <div className="md:w-1/3 flex flex-col gap-6">
-            <div className="bg-[#0A0A0A] p-5 rounded-xl border border-gray-800">
-              <h3 className="text-white font-bold mb-4">Ubah Status Pesanan</h3>
+            <div className="bg-[#0A0A0A] p-5 rounded-xl border border-gray-800 flex flex-col gap-4">
+              <h3 className="text-white font-bold flex items-center gap-2">
+                Kelola Pesanan
+              </h3>
 
-              <div className="flex flex-col gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-2">
+                  Ubah Status
+                </label>
                 <select
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full bg-[#1A1A1A] text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-[#B88E2F] font-medium"
+                  className="w-full bg-[#1A1A1A] text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-[#B88E2F] font-medium text-sm"
                 >
                   <option value="PENDING">Pending (Menunggu Bayar)</option>
                   <option value="MENUNGGU_KONFIRMASI">
@@ -165,15 +169,29 @@ export default function ModalDetailOrder({
                   <option value="SELESAI">Selesai / Dikirim</option>
                   <option value="BATAL">Batal</option>
                 </select>
-
-                <button
-                  onClick={handleSaveStatus}
-                  disabled={newStatus === order.status_order}
-                  className="w-full py-2.5 rounded-lg font-medium text-white bg-[#B88E2F] hover:bg-[#9A7526] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Simpan Status
-                </button>
               </div>
+
+              {order.metode_pembayaran === "COD" && (
+                <div>
+                  <label className="block text-xs text-yellow-500 mb-2">
+                    Ubah Jadwal COD
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={newCodDate}
+                    onChange={(e) => setNewCodDate(e.target.value)}
+                    className="w-full bg-[#1A1A1A] text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-[#B88E2F] text-sm"
+                  />
+                </div>
+              )}
+
+              <button
+                onClick={handleSaveData}
+                disabled={!hasChanges}
+                className="w-full mt-2 py-3 rounded-lg font-medium text-white bg-[#B88E2F] hover:bg-[#9A7526] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Simpan Perubahan
+              </button>
             </div>
 
             <div className="bg-[#0A0A0A] p-5 rounded-xl border border-gray-800">
@@ -187,15 +205,6 @@ export default function ModalDetailOrder({
                   {order.metode_pembayaran}
                 </span>
               </div>
-
-              {order.metode_pembayaran === "COD" && order.tanggal_cod && (
-                <div className="flex justify-between items-center border-b border-gray-800 pb-3 mb-3 text-sm">
-                  <span className="text-gray-400">Rencana Ambil</span>
-                  <span className="text-yellow-500 font-bold">
-                    {formatDateTime(order.tanggal_cod)}
-                  </span>
-                </div>
-              )}
 
               <div className="flex justify-between items-center text-base">
                 <span className="text-gray-300">Total Tagihan</span>
