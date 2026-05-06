@@ -141,9 +141,9 @@ export default function DashboardSidebar({
             <span className="text-sm">Laporan</span>
           </Link>
           <Link
-            href="/dashboard/pengguna"
+            href="/dashboard/user"
             onClick={onClose}
-            className={getMenuClass("/dashboard/pengguna")}
+            className={getMenuClass("/dashboard/user")}
           >
             <Users size={18} />
             <span className="text-sm">Pengguna</span>
