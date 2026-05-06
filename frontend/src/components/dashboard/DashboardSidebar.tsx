@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -12,6 +14,7 @@ import {
   LogOut,
   X,
 } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 interface DashboardSidebarProps {
   isOpen: boolean;
@@ -22,6 +25,15 @@ export default function DashboardSidebar({
   isOpen,
   onClose,
 }: DashboardSidebarProps) {
+  const pathname = usePathname();
+
+  const getMenuClass = (path: string) => {
+    const isActive = pathname === path;
+    return isActive
+      ? "flex items-center space-x-3 text-white bg-[#B88E2F] px-4 py-3 rounded-lg transition-colors shadow-lg"
+      : "flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-3 rounded-lg transition-colors";
+  };
+
   return (
     <>
       {isOpen && (
@@ -55,7 +67,7 @@ export default function DashboardSidebar({
           <Link
             href="/dashboard"
             onClick={onClose}
-            className="flex items-center space-x-3 text-white bg-[#B88E2F] px-4 py-3 rounded-lg transition-colors shadow-lg mb-2"
+            className={getMenuClass("/dashboard")}
           >
             <LayoutDashboard size={20} />
             <span className="font-medium text-sm">Dashboard</span>
@@ -70,7 +82,7 @@ export default function DashboardSidebar({
           <Link
             href="/dashboard/product"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-2.5 rounded-lg transition-colors"
+            className={getMenuClass("/dashboard/product")}
           >
             <Package size={18} />
             <span className="text-sm">Produk</span>
@@ -78,7 +90,7 @@ export default function DashboardSidebar({
           <Link
             href="/dashboard/category"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-2.5 rounded-lg transition-colors"
+            className={getMenuClass("/dashboard/category")}
           >
             <Layers size={18} />
             <span className="text-sm">Kategori</span>
@@ -91,12 +103,12 @@ export default function DashboardSidebar({
           </div>
 
           <Link
-            href="/dashboard/pesanan"
+            href="/dashboard/order"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-2.5 rounded-lg transition-colors"
+            className={getMenuClass("/dashboard/order")}
           >
             <ShoppingBag size={18} />
-            <span className="text-sm">Pesanan</span>
+            <span className="text-sm">Order</span>
             <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
               3
             </span>
@@ -104,7 +116,7 @@ export default function DashboardSidebar({
           <Link
             href="/dashboard/promo"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-2.5 rounded-lg transition-colors"
+            className={getMenuClass("/dashboard/promo")}
           >
             <Tag size={18} />
             <span className="text-sm">Promo</span>
@@ -112,7 +124,7 @@ export default function DashboardSidebar({
           <Link
             href="/dashboard/jadwal-cod"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-2.5 rounded-lg transition-colors"
+            className={getMenuClass("/dashboard/jadwal-cod")}
           >
             <Calendar size={18} />
             <span className="text-sm">Jadwal COD</span>
@@ -123,7 +135,7 @@ export default function DashboardSidebar({
           <Link
             href="/dashboard/laporan"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-2.5 rounded-lg transition-colors"
+            className={getMenuClass("/dashboard/laporan")}
           >
             <FileText size={18} />
             <span className="text-sm">Laporan</span>
@@ -131,7 +143,7 @@ export default function DashboardSidebar({
           <Link
             href="/dashboard/pengguna"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-2.5 rounded-lg transition-colors"
+            className={getMenuClass("/dashboard/pengguna")}
           >
             <Users size={18} />
             <span className="text-sm">Pengguna</span>
@@ -139,7 +151,7 @@ export default function DashboardSidebar({
           <Link
             href="/dashboard/pengaturan"
             onClick={onClose}
-            className="flex items-center space-x-3 text-gray-400 hover:text-white hover:bg-gray-800 px-4 py-2.5 rounded-lg transition-colors"
+            className={getMenuClass("/dashboard/pengaturan")}
           >
             <Settings size={18} />
             <span className="text-sm">Pengaturan</span>

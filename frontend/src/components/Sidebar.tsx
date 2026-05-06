@@ -1,8 +1,7 @@
-// src/components/Sidebar.tsx
-"use client"; // Wajib ditambahkan karena kita menggunakan hook usePathname
+"use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation"; // Import hook untuk membaca URL aktif
+import { usePathname } from "next/navigation";
 import {
   Home,
   Library,
@@ -23,11 +22,8 @@ export default function Sidebar({
   isOpen = false,
   onClose = () => {},
 }: SidebarProps) {
-  // Ambil rute URL saat ini (contoh: '/' atau '/katalog')
   const pathname = usePathname();
 
-  // Fungsi bantuan untuk menentukan warna tombol
-  // Jika rute saat ini sama dengan rute menu, berikan warna emas. Jika tidak, warna transparan.
   const getMenuClass = (path: string) => {
     const isActive = pathname === path;
     return isActive
