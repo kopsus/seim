@@ -3,29 +3,34 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Category } from "@/types/category";
+import axiosInstance from "@/lib/axios";
 
 interface ModalEditCategoryProps {
   isOpen: boolean;
   onClose: () => void;
   category: Category;
+  onSuccess: () => void;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function ModalEditCategory({
   isOpen,
   onClose,
   category,
+  onSuccess,
+  setIsLoading,
 }: ModalEditCategoryProps) {
   const [formData, setFormData] = useState({
-    nama_kategori: "",
-    deskripsi: "",
+    name: "",
+    description: "",
   });
 
   useEffect(() => {
     if (isOpen && category) {
       const timer = setTimeout(() => {
         setFormData({
-          nama_kategori: category.nama_kategori || "",
-          deskripsi: category.deskripsi || "",
+          name: category.nama_kategori || "",
+          description: category.deskripsi || "",
         });
       }, 0);
       return () => clearTimeout(timer);
@@ -39,6 +44,20 @@ export default function ModalEditCategory({
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      await axiosInstance.put(`/categories/${category.id}`, formData);
+      onSuccess();
+      onClose();
+    } catch {
+      alert("Gagal mengubah kategori");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -67,8 +86,8 @@ export default function ModalEditCategory({
               </label>
               <input
                 type="text"
-                name="nama_kategori"
-                value={formData.nama_kategori}
+                name="name"
+                value={formData.name}
                 onChange={handleInputChange}
                 className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
               />
@@ -79,9 +98,9 @@ export default function ModalEditCategory({
                 Deskripsi (Opsional)
               </label>
               <textarea
-                name="deskripsi"
+                name="description"
                 rows={4}
-                value={formData.deskripsi}
+                value={formData.description}
                 onChange={handleInputChange}
                 className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F] resize-none"
               ></textarea>
@@ -96,7 +115,10 @@ export default function ModalEditCategory({
           >
             Batal
           </button>
-          <button className="px-6 py-2.5 rounded-lg font-medium bg-[#B88E2F] hover:bg-[#9A7526] text-white transition-colors">
+          <button
+            onClick={handleUpdate}
+            className="px-6 py-2.5 rounded-lg font-medium bg-[#B88E2F] hover:bg-[#9A7526] text-white transition-colors"
+          >
             Simpan Perubahan
           </button>
         </div>

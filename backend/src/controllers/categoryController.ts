@@ -19,12 +19,12 @@ export const createCategory = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const { name, description } = req.body; // Menerima payload bahasa Inggris
+    const { name, description } = req.body;
 
     const newCategory = await prisma.kategori.create({
       data: {
-        nama_kategori: name, // Map ke kolom database
-        deskripsi: description, // Map ke kolom database
+        nama_kategori: name,
+        deskripsi: description,
       },
     });
 
@@ -80,7 +80,6 @@ export const deleteCategory = async (
 
     res.status(200).json({ message: "Category successfully deleted!" });
   } catch (error) {
-    // Jika gagal, mungkin kategori sudah dipakai oleh sebuah produk
     res.status(500).json({
       message:
         "Failed to delete category. Ensure no products are using this category.",
