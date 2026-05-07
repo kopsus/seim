@@ -4,7 +4,10 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        hostname: "images.tokopedia.net",
+        protocol: "http",
+        hostname: "localhost",
+        port: "5000",
+        pathname: "/**",
       },
     ],
   },

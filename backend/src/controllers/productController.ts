@@ -176,9 +176,13 @@ export const updateProduct = async (
     if (req.body.retainedPhotos !== undefined || (files && files.length > 0)) {
       let retained: string[] = [];
       if (req.body.retainedPhotos) {
-        retained = Array.isArray(req.body.retainedPhotos)
-          ? req.body.retainedPhotos
-          : [req.body.retainedPhotos];
+        try {
+          retained = JSON.parse(req.body.retainedPhotos as string);
+        } catch (e) {
+          retained = Array.isArray(req.body.retainedPhotos)
+            ? req.body.retainedPhotos
+            : [req.body.retainedPhotos];
+        }
       }
 
       const newPhotoPaths =
@@ -252,10 +256,22 @@ export const deleteProduct = async (
 
     if (photos && Array.isArray(photos)) {
       photos.forEach((photoUrl) => {
-        const fullPath = path.join(process.cwd(), "public", photoUrl);
+        let cleanPath = photoUrl;
+
+        if (cleanPath.startsWith("public/")) {
+          cleanPath = cleanPath.replace("public/", "");
+        }
+
+        if (cleanPath.startsWith("/")) {
+          cleanPath = cleanPath.substring(1);
+        }
+
+        const fullPath = path.join(process.cwd(), "public", cleanPath);
 
         if (fs.existsSync(fullPath)) {
           fs.unlinkSync(fullPath);
+        } else {
+          console.warn(`File tidak ditemukan, diabaikan: ${fullPath}`);
         }
       });
     }

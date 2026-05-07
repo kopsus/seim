@@ -1,14 +1,15 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { X } from "lucide-react";
+import { X, Tag, Package, CheckCircle, Info } from "lucide-react";
 import { formatRupiah } from "@/utils/formatRupiah";
-import { Product } from "@/types/product";
+import { getImageUrl } from "@/utils/getImageUrl";
 
 interface ModalDetailProdukProps {
   isOpen: boolean;
   onClose: () => void;
-  product: Product;
+  product: any;
 }
 
 export default function ModalDetailProduk({
@@ -16,7 +17,26 @@ export default function ModalDetailProduk({
   onClose,
   product,
 }: ModalDetailProdukProps) {
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        setActiveImageIndex(0);
+      }, 0);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, product]);
   if (!isOpen || !product) return null;
+
+  const getStatusBadge = (status: string) => {
+    if (status === "READY")
+      return "bg-green-500/10 text-green-500 border-green-500/20";
+    if (status === "SOLD")
+      return "bg-red-500/10 text-red-500 border-red-500/20";
+    return "bg-gray-500/10 text-gray-500 border-gray-500/20";
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
@@ -25,9 +45,11 @@ export default function ModalDetailProduk({
         onClick={onClose}
       ></div>
 
-      <div className="bg-[#1A1A1A] border border-gray-800 rounded-2xl w-full max-w-4xl relative z-10 shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-[#1A1A1A] border border-gray-800 rounded-2xl w-full max-w-4xl relative z-10 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between p-6 border-b border-gray-800 bg-[#121212]">
-          <h2 className="text-xl font-bold text-white">Detail Sepatu</h2>
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            Detail Produk
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors p-1"
@@ -36,66 +58,100 @@ export default function ModalDetailProduk({
           </button>
         </div>
 
-        <div className="flex flex-col md:flex-row p-6 gap-8 max-h-[80vh] overflow-y-auto custom-scrollbar">
+        <div className="p-6 overflow-y-auto custom-scrollbar flex flex-col md:flex-row gap-8">
           <div className="md:w-1/2 flex flex-col gap-4">
-            <div className="relative w-full aspect-square bg-gray-900 rounded-xl border border-gray-800 flex items-center justify-center overflow-hidden p-4">
-              {product.badge && (
-                <span className="absolute top-4 left-4 bg-[#B88E2F] text-white text-xs font-bold px-3 py-1 rounded z-10">
-                  {product.badge}
-                </span>
-              )}
+            <div className="relative w-full aspect-square bg-[#0A0A0A] rounded-xl overflow-hidden border border-gray-800 flex items-center justify-center p-4">
               <Image
-                src={product.foto[0]}
+                src={getImageUrl(
+                  product.foto ? [product.foto[activeImageIndex]] : [],
+                )}
                 alt={product.nama_produk}
                 fill
-                className="object-contain"
+                className="object-cover"
+                unoptimized={process.env.NODE_ENV === "development"}
               />
+
+              {product.badge && (
+                <div className="absolute top-4 left-4 px-3 py-1 bg-[#B88E2F] text-white text-xs font-bold uppercase rounded shadow-lg">
+                  {product.badge}
+                </div>
+              )}
             </div>
+
+            {product.foto && product.foto.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                {product.foto.map((fotoStr: string, index: number) => (
+                  <button
+                    key={index}
+                    onClick={() => setActiveImageIndex(index)}
+                    className={`relative w-20 h-20 shrink-0 bg-[#0A0A0A] rounded-lg overflow-hidden border-2 transition-colors ${
+                      activeImageIndex === index
+                        ? "border-[#B88E2F]"
+                        : "border-gray-800 hover:border-gray-600"
+                    }`}
+                  >
+                    <Image
+                      src={getImageUrl([fotoStr])}
+                      alt={`${product.nama_produk} - ${index + 1}`}
+                      fill
+                      className="object-contain p-2"
+                      unoptimized={process.env.NODE_ENV === "development"}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="md:w-1/2 flex flex-col">
-            <span className="text-[#B88E2F] text-sm font-bold tracking-wider uppercase mb-2">
-              {product.kategori.nama_kategori}
-            </span>
-            <h1 className="text-3xl font-bold text-white mb-2">
-              {product.nama_produk}
-            </h1>
-            <p className="text-2xl font-bold text-white mb-6 border-b border-gray-800 pb-6">
-              {formatRupiah(product.harga ? Number(product.harga) : 0)}
-            </p>
-
-            <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-              <div className="bg-[#0A0A0A] p-4 rounded-xl border border-gray-800">
-                <p className="text-gray-500 mb-1">Ukuran (Size)</p>
-                <p className="text-white font-bold text-lg">{product.size}</p>
-              </div>
-              <div className="bg-[#0A0A0A] p-4 rounded-xl border border-gray-800">
-                <p className="text-gray-500 mb-1">Status</p>
-                <span
-                  className={`inline-block px-2.5 py-1 text-xs font-bold rounded-full border ${
-                    product.status === "READY"
-                      ? "bg-green-500/10 text-green-500 border-green-500/20"
-                      : "bg-red-500/10 text-red-500 border-red-500/20"
-                  }`}
-                >
-                  {product.status}
-                </span>
-              </div>
+          <div className="md:w-1/2 flex flex-col gap-6">
+            <div>
+              <p className="text-[#B88E2F] text-sm font-bold tracking-wider mb-1">
+                {product.kategori?.nama_kategori || "Tanpa Kategori"}
+              </p>
+              <h1 className="text-3xl font-bold text-white mb-2">
+                {product.nama_produk}
+              </h1>
+              <p className="text-2xl font-medium text-gray-300">
+                {formatRupiah(Number(product.harga))}
+              </p>
             </div>
 
-            <div className="mb-6">
-              <h3 className="text-white font-bold mb-2">Kondisi</h3>
-              <p className="text-gray-400 text-sm">
-                {product.kondisi || "95% Like New (Dummy)"}
-              </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-[#0A0A0A] p-4 rounded-xl border border-gray-800">
+                <p className="text-xs text-gray-500 mb-1 flex items-center gap-1.5">
+                  <Tag size={14} /> Kondisi
+                </p>
+                <p className="text-white font-medium">
+                  {product.kondisi || "-"}
+                </p>
+              </div>
+              <div className="bg-[#0A0A0A] p-4 rounded-xl border border-gray-800">
+                <p className="text-xs text-gray-500 mb-1 flex items-center gap-1.5">
+                  <Package size={14} /> Ukuran (Size)
+                </p>
+                <p className="text-white font-medium">{product.size || "-"}</p>
+              </div>
+              <div className="bg-[#0A0A0A] p-4 rounded-xl border border-gray-800 md:col-span-2 flex justify-between items-center">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1 flex items-center gap-1.5">
+                    <CheckCircle size={14} /> Status Ketersediaan
+                  </p>
+                  <span
+                    className={`inline-block px-2.5 py-1 text-xs font-bold rounded-full border mt-1 ${getStatusBadge(product.status)}`}
+                  >
+                    {product.status}
+                  </span>
+                </div>
+              </div>
             </div>
 
             <div>
-              <h3 className="text-white font-bold mb-2">Deskripsi Produk</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                {product.deskripsi ||
-                  "Sepatu ini adalah barang bekas berkualitas tinggi yang telah disortir dan dicuci bersih. Nyaman digunakan untuk aktivitas sehari-hari maupun olahraga. Tidak ada cacat mayor pada bagian sol maupun jahitan."}
+              <p className="text-sm text-gray-400 mb-2 flex items-center gap-1.5 font-medium">
+                <Info size={16} /> Deskripsi Produk
               </p>
+              <div className="bg-[#0A0A0A] p-4 rounded-xl border border-gray-800 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
+                {product.deskripsi || "Tidak ada deskripsi untuk produk ini."}
+              </div>
             </div>
           </div>
         </div>

@@ -1,302 +1,337 @@
+// src/components/dashboard/ModalEditProduk.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { X, Upload } from "lucide-react";
-import { Product } from "@/types/product";
+import { X, Upload, Trash2, ImageIcon, AlertCircle } from "lucide-react";
+import axiosInstance from "@/lib/axios";
+import { getImageUrl } from "@/utils/getImageUrl";
 
 interface ModalEditProdukProps {
   isOpen: boolean;
   onClose: () => void;
-  product: Product;
+  product: any;
+  onSuccess: () => void;
 }
 
 export default function ModalEditProduk({
   isOpen,
   onClose,
   product,
+  onSuccess,
 }: ModalEditProdukProps) {
-  const [formData, setFormData] = useState({
-    nama_produk: "",
-    kategori_id: "",
-    harga: "",
-    size: "",
-    kondisi: "",
-    status: "READY",
-    badge: "",
-    deskripsi: "",
-  });
+  // --- STATE DATA FORM ---
+  const [categoryId, setCategoryId] = useState("");
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [description, setDescription] = useState("");
+  const [condition, setCondition] = useState("");
+  const [size, setSize] = useState("");
+  const [status, setStatus] = useState("");
+  const [badge, setBadge] = useState("");
 
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  const [existingPhotos, setExistingPhotos] = useState<string[]>([]);
+  // --- STATE FOTO ---
+  const [existingPhotos, setExistingPhotos] = useState<string[]>([]); // Foto yang masih ada di server
+  const [newPhotos, setNewPhotos] = useState<File[]>([]); // File fisik baru
+  const [newPreviewUrls, setNewPreviewUrls] = useState<string[]>([]); // Preview file baru
 
+  const [categories, setCategories] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Sync data saat modal dibuka
   useEffect(() => {
     if (isOpen && product) {
       const timer = setTimeout(() => {
-        setFormData({
-          nama_produk: product.nama_produk || "",
-          kategori_id: product.kategori?.id?.toString() || "1",
-          harga: product.harga?.toString() || "",
-          size: product.size || "",
-          kondisi: product.kondisi || "",
-          status: product.status || "READY",
-          badge: product.badge || "",
-          deskripsi: product.deskripsi || "",
-        });
-
-        setExistingPhotos(Array.isArray(product.foto) ? product.foto : []);
+        setCategoryId(product.kategori_id?.toString() || "");
+        setName(product.nama_produk || "");
+        setPrice(product.harga || "");
+        setDescription(product.deskripsi || "");
+        setCondition(product.kondisi || "New");
+        setSize(product.size || "");
+        setStatus(product.status || "READY");
+        setBadge(product.badge || "");
+        setExistingPhotos(product.foto || []); // Ambil foto dari database
+        setNewPhotos([]);
+        setNewPreviewUrls([]);
       }, 0);
-
       return () => clearTimeout(timer);
     }
   }, [isOpen, product]);
 
-  if (!isOpen) return null;
+  // Fetch kategori untuk dropdown
+  useEffect(() => {
+    if (isOpen) {
+      axiosInstance
+        .get("/categories")
+        .then((res) => setCategories(res.data.data));
+    }
+  }, [isOpen]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  if (!isOpen || !product) return null;
+
+  // --- HANDLER FOTO ---
+
+  // Menghapus foto yang SUDAH ADA di server (Client-side dulu)
+  const removeExistingImage = (pathToRemove: string) => {
+    setExistingPhotos((prev) => prev.filter((path) => path !== pathToRemove));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-    const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
-    e.target.value = "";
+  // Menambah foto baru
+  const handleNewImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const selectedFiles = Array.from(e.target.files);
+      setNewPhotos((prev) => [...prev, ...selectedFiles]);
+      const newPreviews = selectedFiles.map((file) =>
+        URL.createObjectURL(file),
+      );
+      setNewPreviewUrls((prev) => [...prev, ...newPreviews]);
+    }
   };
 
-  const handleRemoveNewImage = (indexToRemove: number) => {
-    setPreviewUrls((prev) =>
+  // Membatalkan foto baru yang belum diupload
+  const removeNewImage = (indexToRemove: number) => {
+    setNewPhotos((prev) => prev.filter((_, index) => index !== indexToRemove));
+    setNewPreviewUrls((prev) =>
       prev.filter((_, index) => index !== indexToRemove),
     );
   };
 
-  const handleCloseModal = () => {
-    setPreviewUrls([]);
-    onClose();
+  // --- SUBMIT UPDATE ---
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("categoryId", categoryId);
+      formData.append("name", name);
+      formData.append("price", price);
+      formData.append("description", description);
+      formData.append("condition", condition);
+      formData.append("size", size);
+      formData.append("status", status);
+      formData.append("badge", badge);
+
+      // KIRIM INFORMASI FOTO YANG TERSISA
+      // Kita kirim sebagai string JSON agar backend tahu foto mana saja yang jangan dihapus
+      formData.append("retainedPhotos", JSON.stringify(existingPhotos));
+
+      // KIRIM FOTO BARU (jika ada)
+      if (newPhotos.length > 0) {
+        newPhotos.forEach((photo) => {
+          formData.append("photos", photo);
+        });
+      }
+
+      await axiosInstance.put(`/products/${product.id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      onSuccess();
+      onClose();
+    } catch (error) {
+      console.error("Gagal update:", error);
+      alert("Gagal memperbarui produk.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div
-        className="absolute inset-0 bg-black bg-opacity-70 backdrop-blur-sm transition-opacity"
-        onClick={handleCloseModal}
+        className="absolute inset-0 bg-black bg-opacity-70 backdrop-blur-sm"
+        onClick={onClose}
       ></div>
 
-      <div className="bg-[#1A1A1A] border border-gray-800 rounded-2xl w-full max-w-3xl relative z-10 shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-6 border-b border-gray-800">
-          <h2 className="text-xl font-bold text-white">Edit Produk</h2>
+      <div className="bg-[#1A1A1A] border border-gray-800 rounded-2xl w-full max-w-5xl relative z-10 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-800 bg-[#121212]">
+          <h2 className="text-xl font-bold text-white uppercase tracking-wider">
+            Update Produk
+          </h2>
           <button
-            onClick={handleCloseModal}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            onClick={onClose}
+            className="text-gray-400 hover:text-white p-1"
           >
             <X size={24} />
           </button>
         </div>
 
         <div className="p-6 overflow-y-auto custom-scrollbar">
-          <form className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form className="flex flex-col md:flex-row gap-8">
+            {/* BAGIAN FOTO */}
+            <div className="md:w-1/3 flex flex-col gap-6">
+              {/* Foto Saat Ini dengan Fitur Hapus */}
               <div>
-                <label className="block text-sm text-gray-400 mb-2">
-                  Nama Produk <span className="text-red-500">*</span>
+                <label className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
+                  <ImageIcon size={14} /> Foto Saat Ini ({existingPhotos.length}
+                  )
                 </label>
-                <input
-                  type="text"
-                  name="nama_produk"
-                  value={formData.nama_produk}
-                  onChange={handleInputChange}
-                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">
-                  Kategori <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="kategori_id"
-                  value={formData.kategori_id}
-                  onChange={handleInputChange}
-                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
-                >
-                  <option value="1">Sneakers</option>
-                  <option value="2">Casual</option>
-                  <option value="3">Sport</option>
-                </select>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">
-                  Harga (Rp) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  name="harga"
-                  value={formData.harga}
-                  onChange={handleInputChange}
-                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">
-                  Ukuran (Size) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="size"
-                  value={formData.size}
-                  onChange={handleInputChange}
-                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">
-                  Kondisi <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="kondisi"
-                  value={formData.kondisi}
-                  onChange={handleInputChange}
-                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">
-                  Status Produk
-                </label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
-                >
-                  <option value="READY">READY</option>
-                  <option value="SOLD">SOLD</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">
-                  Badge (Opsional)
-                </label>
-                <select
-                  name="badge"
-                  value={formData.badge}
-                  onChange={handleInputChange}
-                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
-                >
-                  <option value="">Tidak ada badge</option>
-                  <option value="NEW">NEW</option>
-                  <option value="SOLD OUT">SOLD OUT</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">
-                Deskripsi Produk <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                name="deskripsi"
-                rows={4}
-                value={formData.deskripsi}
-                onChange={handleInputChange}
-                className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F] resize-none"
-              ></textarea>
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">
-                Foto Produk
-              </label>
-
-              {existingPhotos.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs text-gray-500 mb-2">Foto Saat Ini:</p>
-                  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3">
-                    {existingPhotos.map((url, index) => (
+                {existingPhotos.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {existingPhotos.map((foto, idx) => (
                       <div
-                        key={`existing-${index}`}
-                        className="relative rounded-lg overflow-hidden border border-gray-700 aspect-square bg-gray-900 flex items-center justify-center opacity-70"
+                        key={idx}
+                        className="relative aspect-square bg-[#0A0A0A] rounded-xl overflow-hidden border border-gray-800 group"
                       >
                         <Image
-                          src={url}
-                          alt={`Existing ${index}`}
+                          src={getImageUrl([foto])}
+                          alt="Current"
                           fill
                           className="object-cover"
+                          unoptimized={process.env.NODE_ENV === "development"}
                         />
+                        {/* TOMBOL HAPUS FOTO LAMA */}
+                        <button
+                          type="button"
+                          onClick={() => removeExistingImage(foto)}
+                          className="absolute inset-0 bg-red-600/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Hapus foto ini"
+                        >
+                          <Trash2 size={20} className="text-white" />
+                        </button>
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-
-              <div className="border-2 border-dashed border-gray-700 rounded-xl p-8 text-center bg-[#0A0A0A] hover:bg-[#121212] transition-colors cursor-pointer relative mb-4 mt-2">
-                <Upload className="mx-auto text-gray-500 mb-3" size={32} />
-                <p className="text-sm text-gray-400 mb-1">
-                  Klik untuk menambahkan foto baru
-                </p>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
+                ) : (
+                  <div className="p-4 border border-dashed border-gray-800 rounded-xl text-center text-gray-600 text-xs">
+                    Semua foto lama dihapus.
+                  </div>
+                )}
               </div>
 
-              {previewUrls.length > 0 && (
-                <div>
-                  <p className="text-xs text-green-500 mb-2">
-                    Foto Baru yang Ditambahkan:
-                  </p>
-                  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3">
-                    {previewUrls.map((url, index) => (
+              {/* Tambah Foto Baru */}
+              <div>
+                <label className="block text-xs font-bold text-[#B88E2F] uppercase mb-3">
+                  Unggah Foto Tambahan
+                </label>
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-700 hover:border-[#B88E2F] rounded-xl bg-[#0A0A0A] cursor-pointer group transition-colors">
+                  <Upload className="w-6 h-6 text-gray-500 group-hover:text-[#B88E2F] mb-2" />
+                  <span className="text-[10px] text-gray-500 uppercase font-bold">
+                    Pilih File
+                  </span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    multiple
+                    accept="image/*"
+                    onChange={handleNewImageChange}
+                  />
+                </label>
+
+                {/* Preview Foto Baru */}
+                {newPreviewUrls.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mt-4 p-3 bg-[#B88E2F]/5 border border-[#B88E2F]/10 rounded-xl">
+                    {newPreviewUrls.map((url, index) => (
                       <div
-                        key={`new-${index}`}
-                        className="relative group rounded-lg overflow-hidden border border-green-700 aspect-square bg-gray-900 flex items-center justify-center"
+                        key={index}
+                        className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden border border-[#B88E2F]/20 group"
                       >
                         <Image
                           src={url}
-                          alt={`New Preview ${index}`}
+                          alt="New Preview"
                           fill
                           className="object-cover"
                         />
                         <button
                           type="button"
-                          onClick={() => handleRemoveNewImage(index)}
-                          className="absolute top-1 right-1 bg-black/70 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          onClick={() => removeNewImage(index)}
+                          className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <X size={14} />
+                          <Trash2 size={14} className="text-red-500" />
                         </button>
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+
+              <div className="flex items-start gap-2 p-3 bg-blue-500/5 border border-blue-500/10 rounded-lg">
+                <AlertCircle size={16} className="text-blue-500 mt-0.5" />
+                <p className="text-[10px] text-gray-400">
+                  Foto yang Anda hapus di atas akan benar-benar hilang dari
+                  server setelah Anda menekan tombol Simpan Perubahan.
+                </p>
+              </div>
+            </div>
+
+            {/* BAGIAN FORM (Sama seperti sebelumnya) */}
+            <div className="md:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-400 mb-2">
+                  Nama Produk
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  Kategori
+                </label>
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
+                >
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.nama_kategori}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  Harga
+                </label>
+                <input
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
+                />
+              </div>
+
+              {/* ... Field lainnya (Size, Condition, Status, Badge, Description) tetap sama ... */}
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-400 mb-2">
+                  Deskripsi
+                </label>
+                <textarea
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F] resize-none"
+                ></textarea>
+              </div>
             </div>
           </form>
         </div>
 
-        <div className="p-6 border-t border-gray-800 bg-[#121212] rounded-b-2xl flex justify-end space-x-4 mt-auto">
+        <div className="p-6 border-t border-gray-800 bg-[#121212] flex justify-end gap-3">
           <button
-            onClick={handleCloseModal}
-            className="px-6 py-2.5 rounded-lg font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+            onClick={onClose}
+            className="px-6 py-2.5 rounded-lg text-gray-400 hover:text-white"
           >
             Batal
           </button>
-          <button className="px-6 py-2.5 rounded-lg font-medium bg-[#B88E2F] hover:bg-[#9A7526] text-white transition-colors">
-            Simpan Perubahan
+          <button
+            onClick={handleUpdate}
+            disabled={isLoading}
+            className="bg-[#B88E2F] hover:bg-[#9A7526] text-white px-8 py-2.5 rounded-lg font-bold flex items-center disabled:opacity-50"
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              "Simpan Perubahan"
+            )}
           </button>
         </div>
       </div>

@@ -1,24 +1,56 @@
 "use client";
 
+import axiosInstance from "@/lib/axios";
+import { Product } from "@/types/product";
 import { X, AlertTriangle } from "lucide-react";
+import { useState } from "react";
 
 interface ModalDeleteProdukProps {
   isOpen: boolean;
   onClose: () => void;
-  product: any;
+  product: Product;
+  onSuccess: () => void;
 }
 
 export default function ModalDeleteProduk({
   isOpen,
   onClose,
   product,
+  onSuccess,
 }: ModalDeleteProdukProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   if (!isOpen || !product) return null;
 
-  const handleDelete = () => {
-    console.log("Menghapus produk dengan ID:", product.id);
-
+  const handleClose = () => {
+    setErrorMessage("");
     onClose();
+  };
+
+  const handleDelete = async () => {
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      await axiosInstance.delete(`/products/${product.id}`);
+      onSuccess();
+      handleClose();
+    } catch (error: any) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        setErrorMessage(error.response.data.message);
+      } else {
+        setErrorMessage(
+          "Gagal menghapus kategori. Terjadi kesalahan pada server.",
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -48,24 +80,37 @@ export default function ModalDeleteProduk({
             Anda yakin ingin menghapus sepatu ini dari katalog?
           </p>
           <p className="text-white font-bold mb-6">{product.nama_produk}</p>
-          <p className="text-xs text-red-400 bg-red-500/10 p-3 rounded-lg border border-red-500/20 w-full mb-2">
-            Tindakan ini tidak dapat dibatalkan. Foto dan data produk akan
-            terhapus secara permanen dari sistem.
-          </p>
+
+          {errorMessage ? (
+            <div className="text-xs text-red-500 bg-red-500/10 p-3 rounded-lg border border-red-500/20 w-full mb-2 text-left">
+              <strong>Penghapusan Gagal:</strong> {errorMessage}
+            </div>
+          ) : (
+            <p className="text-xs text-red-400 bg-red-500/10 p-3 rounded-lg border border-red-500/20 w-full mb-2">
+              Tindakan ini tidak dapat dibatalkan. Foto dan data produk akan
+              terhapus secara permanen dari sistem.
+            </p>
+          )}
         </div>
 
         <div className="p-4 border-t border-gray-800 bg-[#121212] flex gap-3">
           <button
-            onClick={onClose}
-            className="flex-1 py-3 rounded-lg font-medium text-white bg-gray-800 hover:bg-gray-700 transition-colors"
+            onClick={handleClose}
+            disabled={isLoading}
+            className="flex-1 py-3 rounded-lg font-medium text-white bg-gray-800 hover:bg-gray-700 transition-colors disabled:opacity-50"
           >
             Batal
           </button>
           <button
             onClick={handleDelete}
-            className="flex-1 py-3 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors shadow-lg shadow-red-900/20"
+            disabled={isLoading}
+            className="flex-1 py-3 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors shadow-lg shadow-red-900/20 disabled:opacity-50 flex justify-center items-center"
           >
-            Ya, Hapus
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              "Ya, Hapus"
+            )}
           </button>
         </div>
       </div>
