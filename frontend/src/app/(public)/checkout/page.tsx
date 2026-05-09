@@ -31,6 +31,7 @@ export default function CheckoutPage() {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -74,52 +75,75 @@ export default function CheckoutPage() {
       setValidationErrors({ codDate: "Mohon pilih tanggal pengambilan COD." });
       return;
     }
-    if (paymentMethod === "TRANSFER" && !receiptFile) {
+    if (paymentMethod === "TRANSFER" && !receiptFile && !pendingOrderId) {
       setValidationErrors({ receipt: "Mohon unggah bukti transfer Anda." });
       return;
+    }
+
+    if (paymentMethod === "TRANSFER" && receiptFile) {
+      const MAX_FILE_SIZE = 5 * 1024 * 1024;
+      if (receiptFile.size > MAX_FILE_SIZE) {
+        setValidationErrors({
+          receipt: "Ukuran gambar terlalu besar. Maksimal 5MB.",
+        });
+        return;
+      }
+      if (!receiptFile.type.startsWith("image/")) {
+        setValidationErrors({
+          receipt: "File yang diunggah harus berupa gambar (JPG/PNG).",
+        });
+        return;
+      }
     }
 
     setIsSubmitting(true);
 
     try {
-      const productIds = items.map((item) => Number(item.id));
+      let currentOrderId = pendingOrderId;
 
-      const checkoutData = {
-        customerName: name,
-        customerWhatsapp: phone,
-        customerAddress: address,
-        paymentMethod: paymentMethod,
-        codDate: paymentMethod === "COD" ? codDate : undefined,
-        productIds: productIds,
-      };
+      if (!currentOrderId) {
+        const productIds = items.map((item) => Number(item.id));
 
-      const responseCheckout = await axiosInstance.post(
-        "/orders/checkout",
-        checkoutData,
-      );
-      const orderId = responseCheckout.data.data.id;
+        const checkoutData = {
+          customerName: name,
+          customerWhatsapp: phone,
+          customerAddress: address,
+          paymentMethod: paymentMethod,
+          codDate: paymentMethod === "COD" ? codDate : undefined,
+          productIds: productIds,
+        };
 
-      if (paymentMethod === "TRANSFER" && receiptFile) {
+        const responseCheckout = await axiosInstance.post(
+          "/orders/checkout",
+          checkoutData,
+        );
+
+        currentOrderId = responseCheckout.data.data.id;
+
+        setPendingOrderId(currentOrderId);
+      }
+
+      if (paymentMethod === "TRANSFER" && receiptFile && currentOrderId) {
         const formData = new FormData();
-        formData.append("photo", receiptFile);
+        formData.append("receipt", receiptFile);
 
-        await axiosInstance.post(`/orders/${orderId}/receipt`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await axiosInstance.post(
+          `/orders/${currentOrderId}/upload-receipt`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          },
+        );
       }
 
       alert("Pesanan berhasil dibuat! Admin akan segera memverifikasi.");
+      setPendingOrderId(null);
       clearCart();
       router.push("/");
     } catch (error: any) {
-      // KITA HAPUS: console.error("Gagal buat pesanan:", error);
-      // Agar Next.js tidak memunculkan overlay error layar penuh.
-
-      // Cek apakah ini murni error 400 (Validasi dari backend)
       if (error.response && error.response.status === 400) {
         console.log("Validasi backend gagal, menampilkan error ke form UI...");
 
-        // Tangkap array errors dari backend
         if (error.response.data?.errors) {
           const backendErrors = error.response.data.errors;
           const newErrors: Record<string, string> = {};
@@ -133,16 +157,16 @@ export default function CheckoutPage() {
           setValidationErrors(newErrors);
           window.scrollTo({ top: 0, behavior: "smooth" });
         } else {
-          // Jika 400 tapi formatnya bukan array errors
           alert(
             error.response.data?.message ||
               "Data tidak valid, mohon periksa kembali.",
           );
         }
       } else {
-        // Jika ini error lain (misal 500 Server Error atau koneksi mati)
         console.error("Terjadi masalah sistem:", error.message);
-        alert("Terjadi kesalahan sistem saat membuat pesanan.");
+        alert(
+          "Terjadi kesalahan sistem. Jika Anda sudah mengunggah bukti, silakan hubungi admin.",
+        );
       }
     } finally {
       setIsSubmitting(false);

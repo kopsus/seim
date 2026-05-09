@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { X, Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
+import { formatRupiah } from "@/utils/formatRupiah";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -13,14 +14,6 @@ interface CartDrawerProps {
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, removeItem, increaseQuantity, decreaseQuantity } =
     useCartStore();
-
-  const formatRupiah = (number: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(number);
-  };
 
   const totalPrice = items.reduce(
     (total, item) => total + item.price * item.quantity,
@@ -72,6 +65,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     src={item.imageUrl}
                     alt={item.name}
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                 </div>
