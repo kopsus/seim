@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, Filter, Eye } from "lucide-react";
+import { Search, Filter, Eye, Trash2 } from "lucide-react";
 import { formatRupiah } from "@/utils/formatRupiah";
 import axiosInstance from "@/lib/axios";
 
 import ModalDetailOrder from "@/components/dashboard/order/ModalDetailOrder";
+import ModalDeleteOrder from "@/components/dashboard/order/ModalDeleteOrder";
 
 export default function ManajemenPesananPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -14,6 +15,7 @@ export default function ManajemenPesananPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
@@ -206,9 +208,18 @@ export default function ManajemenPesananPage() {
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => handleViewDetail(order)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0A0A0A] hover:bg-[#B88E2F] text-gray-300 hover:text-white rounded border border-gray-800 hover:border-[#B88E2F] transition-colors text-xs font-medium"
+                        className="p-1.5 text-gray-400 hover:text-[#B88E2F] mr-2"
                       >
-                        <Eye size={14} /> Detail
+                        <Eye size={14} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 size={18} />
                       </button>
                     </td>
                   </tr>
@@ -222,6 +233,13 @@ export default function ManajemenPesananPage() {
       <ModalDetailOrder
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
+        order={selectedOrder}
+        onSuccess={fetchOrders}
+      />
+
+      <ModalDeleteOrder
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
         order={selectedOrder}
         onSuccess={fetchOrders}
       />

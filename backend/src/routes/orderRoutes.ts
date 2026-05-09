@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   checkout,
+  deleteOrder,
   getOrderById,
   getOrders,
   updateOrderStatus,
@@ -30,5 +31,6 @@ router.put(
   authorizeRoles("ADMIN", "KASIR"),
   updateOrderStatus,
 );
+router.delete("/:id", verifyToken, authorizeRoles("ADMIN"), deleteOrder);
 
 export default router;

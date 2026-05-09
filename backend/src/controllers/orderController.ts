@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../config/prisma";
+import path from "path";
+import fs from "fs";
 
 export const checkout = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -251,5 +253,57 @@ export const updateOrderStatus = async (
     res
       .status(500)
       .json({ message: "Failed to update order status", error: error.message });
+  }
+};
+
+export const deleteOrder = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const orderId = req.params.id as string;
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!order) {
+      res.status(404).json({ message: "order not found" });
+      return;
+    }
+
+    if (order.bukti_tf_url) {
+      let cleanPath = order.bukti_tf_url;
+
+      if (cleanPath.startsWith("public/")) {
+        cleanPath = cleanPath.replace("public/", "");
+      }
+      if (cleanPath.startsWith("/")) {
+        cleanPath = cleanPath.substring(1);
+      }
+
+      const fullPath = path.join(process.cwd(), "public", cleanPath);
+
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    }
+
+    await prisma.$transaction([
+      prisma.orderItem.deleteMany({
+        where: { order_id: orderId },
+      }),
+
+      prisma.order.delete({
+        where: { id: orderId },
+      }),
+    ]);
+
+    res
+      .status(200)
+      .json({ message: "Order and associated items successfully deleted!" });
+  } catch (error) {
+    console.error("Delete Order Error:", error);
+    res.status(500).json({ message: "Failed to delete order", error });
   }
 };

@@ -4,30 +4,32 @@ import { useState } from "react";
 import axiosInstance from "@/lib/axios";
 import { X, AlertTriangle } from "lucide-react";
 
-interface ModalDeleteCategoriProps {
+interface ModalDeleteOrderProps {
   isOpen: boolean;
   onClose: () => void;
-  category: any;
+  order: any;
   onSuccess: () => void;
 }
 
-export default function ModalDeleteCategory({
+export default function ModalDeleteOrder({
   isOpen,
   onClose,
-  category,
+  order,
   onSuccess,
-}: ModalDeleteCategoriProps) {
+}: ModalDeleteOrderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  if (!isOpen || !category) return null;
+  console.log("Data order", order);
+
+  if (!isOpen || !order) return null;
 
   const handleDelete = async () => {
     setIsLoading(true);
     setErrorMessage("");
 
     try {
-      await axiosInstance.delete(`/categories/${category.id}`);
+      await axiosInstance.delete(`/orders/${order.id}`);
       onSuccess();
       handleClose();
     } catch (error: any) {
@@ -39,7 +41,7 @@ export default function ModalDeleteCategory({
         setErrorMessage(error.response.data.message);
       } else {
         setErrorMessage(
-          "Gagal menghapus kategori. Terjadi kesalahan pada server.",
+          "Gagal menghapus Order. Terjadi kesalahan pada server.",
         );
       }
     } finally {
@@ -74,13 +76,11 @@ export default function ModalDeleteCategory({
             <AlertTriangle size={32} className="text-red-500" />
           </div>
 
-          <h2 className="text-xl font-bold text-white mb-2">Hapus Kategori?</h2>
+          <h2 className="text-xl font-bold text-white mb-2">Hapus Order?</h2>
           <p className="text-gray-400 text-sm mb-1">
-            Anda yakin ingin menghapus kategori ini?
+            Anda yakin ingin menghapus Order ini?
           </p>
-          <p className="text-white font-bold mb-6 text-lg">
-            {category.nama_kategori}
-          </p>
+          <p className="text-white font-bold mb-6 text-lg">{order.id}</p>
 
           {/* AREA PESAN ERROR: Muncul jika ada gagal delete */}
           {errorMessage ? (

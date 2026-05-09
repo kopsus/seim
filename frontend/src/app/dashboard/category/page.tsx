@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2 } from "lucide-react";
 import { formatDate } from "@/utils/formatDate";
 import ModalAddCategory from "@/components/dashboard/category/ModalAddCategory";
 import ModalEditCategory from "@/components/dashboard/category/ModalEditCategory";
