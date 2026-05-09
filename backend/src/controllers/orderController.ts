@@ -82,7 +82,6 @@ export const uploadPaymentReceipt = async (
 ): Promise<void> => {
   try {
     const orderId = req.params.id as string;
-
     const file = req.file as Express.Multer.File;
 
     if (!file) {
@@ -110,11 +109,12 @@ export const uploadPaymentReceipt = async (
 
     const receiptPath = `${process.env.UPLOAD_PATH_RECEIPTS}/${file.filename}`;
 
+    // Kita hanya update URL buktinya, status tetap PENDING
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: {
         bukti_tf_url: receiptPath,
-        status_order: "MENUNGGU_KONFIRMASI",
+        status_order: "PENDING",
       },
     });
 
@@ -132,7 +132,6 @@ export const uploadPaymentReceipt = async (
   }
 };
 
-// GET: Fetch all orders (Protected - For Cashier/Admin)
 export const getOrders = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string, 10) || 1;
@@ -189,7 +188,28 @@ export const getOrders = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// PUT: Update order status (Confirm / Cancel)
+export const getOrderById = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const orderId = req.params.id as string;
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { customer: true, items: { include: { product: true } } },
+    });
+
+    if (!order) {
+      res.status(404).json({ message: "order not found" });
+      return;
+    }
+
+    res.status(200).json({ data: order });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch order", error });
+  }
+};
+
 export const updateOrderStatus = async (
   req: Request,
   res: Response,

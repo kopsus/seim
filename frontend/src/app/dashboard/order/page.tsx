@@ -1,75 +1,56 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import { Search, Filter, Eye } from "lucide-react";
 import { formatRupiah } from "@/utils/formatRupiah";
-import { formatDateTime } from "@/utils/formatDateTime";
-import { useState } from "react";
+import axiosInstance from "@/lib/axios";
+
 import ModalDetailOrder from "@/components/dashboard/order/ModalDetailOrder";
 
 export default function ManajemenPesananPage() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
-  const dummyOrders = [
-    {
-      id: "ord-8f7a-1234",
-      total_harga: 10000000,
-      metode_pembayaran: "TRANSFER",
-      status_order: "MENUNGGU_KONFIRMASI",
-      created_at: "2026-05-06T10:15:00.000Z",
-      bukti_tf_url:
-        "https://images.tokopedia.net/img/cache/700/VqbcmM/2024/10/19/373fcf82-b274-4d62-bd85-5d5ee1c4c3fc.jpg.webp",
-      customer: {
-        nama: "Budi Santoso",
-        no_whatsapp: "081234567890",
-        alamat: "Jl. Sudirman No. 45, Kebayoran Baru, Jakarta Selatan, 12190",
-      },
-      items: [
-        {
-          harga_saat_beli: 10000000,
-          product: {
-            nama_produk: "Sepatu NB",
-            size: "40",
-            foto: [
-              "https://images.tokopedia.net/img/cache/700/VqbcmM/2024/10/19/373fcf82-b274-4d62-bd85-5d5ee1c4c3fc.jpg.webp",
-            ],
-          },
-        },
-      ],
-    },
-    {
-      id: "ord-2b3c-5678",
-      total_harga: 549000,
-      metode_pembayaran: "COD",
-      status_order: "PENDING",
-      created_at: "2026-05-06T09:30:00.000Z",
-      tanggal_cod: "2026-05-08T15:00:00.000Z",
-      customer: {
-        nama: "Siti Aminah",
-        no_whatsapp: "089876543210",
-        alamat: "Bisa COD di Alun-Alun Pemalang depan Masjid Raya.",
-      },
-      items: [
-        {
-          harga_saat_beli: 549000,
-          product: {
-            nama_produk: "Vans Old Skool",
-            size: "39",
-            foto: [
-              "https://images.tokopedia.net/img/cache/700/VqbcmM/2024/10/19/373fcf82-b274-4d62-bd85-5d5ee1c4c3fc.jpg.webp",
-            ],
-          },
-        },
-      ],
-    },
-  ];
+  const fetchOrders = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params: any = { page: 1, limit: 50 };
+      if (searchQuery) params.search = searchQuery;
+      if (selectedStatus) params.status = selectedStatus;
 
-  // Fungsi untuk menentukan warna badge berdasarkan status
+      const response = await axiosInstance.get("/orders", { params });
+      setOrders(response.data.data);
+    } catch (error) {
+      console.error("Gagal mengambil data pesanan:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchQuery, selectedStatus]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchOrders();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [fetchOrders]);
+
+  const handleViewDetail = (order: any) => {
+    setSelectedOrder(order);
+    setIsDetailModalOpen(true);
+  };
+
+  // Mengembalikan warna untuk 4 status utama
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PENDING":
         return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
-      case "MENUNGGU_KONFIRMASI":
+      case "DIPROSES":
         return "bg-blue-500/10 text-blue-500 border-blue-500/20";
       case "SELESAI":
         return "bg-green-500/10 text-green-500 border-green-500/20";
@@ -80,25 +61,28 @@ export default function ManajemenPesananPage() {
     }
   };
 
-  const handleViewDetail = (order: any) => {
-    setSelectedOrder(order);
-    setIsDetailModalOpen(true);
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
   };
 
   return (
     <div className="w-full relative">
-      {/* 1. HEADER HALAMAN */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Manajemen Pesanan</h1>
           <p className="text-sm text-gray-400 mt-1">
-            Pantau transaksi masuk, verifikasi pembayaran, dan perbarui status
-            pesanan.
+            Pantau pesanan masuk, verifikasi pembayaran, dan atur pengiriman.
           </p>
         </div>
       </div>
 
-      {/* 2. AREA PENCARIAN DAN FILTER */}
       <div className="bg-[#1A1A1A] p-4 rounded-xl border border-gray-800 flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search
@@ -107,43 +91,44 @@ export default function ManajemenPesananPage() {
           />
           <input
             type="text"
-            placeholder="Cari nama atau No. WhatsApp pelanggan..."
+            placeholder="Cari nama atau WhatsApp pembeli..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-[#B88E2F] transition-colors text-sm"
           />
         </div>
         <div className="flex gap-2">
-          <select className="bg-[#0A0A0A] text-white border border-gray-800 rounded-lg px-4 py-2 focus:outline-none focus:border-[#B88E2F] text-sm">
-            <option value="">Semua Metode</option>
-            <option value="TRANSFER">Transfer</option>
-            <option value="COD">COD</option>
-          </select>
-          <select className="bg-[#0A0A0A] text-white border border-gray-800 rounded-lg px-4 py-2 focus:outline-none focus:border-[#B88E2F] text-sm">
+          {/* Opsi dropdown disesuaikan ke 4 status */}
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="bg-[#0A0A0A] text-white border border-gray-800 rounded-lg px-4 py-2 focus:outline-none focus:border-[#B88E2F] text-sm cursor-pointer"
+          >
             <option value="">Semua Status</option>
             <option value="PENDING">Pending</option>
-            <option value="MENUNGGU_KONFIRMASI">Menunggu Konfirmasi</option>
+            <option value="DIPROSES">Diproses</option>
             <option value="SELESAI">Selesai</option>
             <option value="BATAL">Batal</option>
           </select>
-          <button className="bg-[#0A0A0A] border border-gray-800 hover:border-gray-600 text-white p-2 rounded-lg transition-colors">
+          <button
+            onClick={fetchOrders}
+            className="bg-[#0A0A0A] border border-gray-800 hover:border-gray-600 text-[#B88E2F] hover:text-white p-2 rounded-lg transition-colors"
+          >
             <Filter size={18} />
           </button>
         </div>
       </div>
 
-      {/* 3. TABEL DATA PESANAN */}
-      <div className="bg-[#1A1A1A] rounded-xl border border-gray-800 overflow-hidden">
+      <div className="bg-[#1A1A1A] rounded-xl border border-gray-800 overflow-hidden mt-6">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-400">
             <thead className="bg-[#0A0A0A] text-gray-300 border-b border-gray-800">
               <tr>
                 <th scope="col" className="px-6 py-4 font-medium">
-                  Order ID
+                  Order ID & Tanggal
                 </th>
                 <th scope="col" className="px-6 py-4 font-medium">
                   Pelanggan
-                </th>
-                <th scope="col" className="px-6 py-4 font-medium text-nowrap">
-                  Waktu Pesan
                 </th>
                 <th scope="col" className="px-6 py-4 font-medium">
                   Metode
@@ -160,60 +145,75 @@ export default function ManajemenPesananPage() {
               </tr>
             </thead>
             <tbody>
-              {dummyOrders.map((order) => (
-                <tr
-                  key={order.id}
-                  className="border-b border-gray-800 hover:bg-[#0A0A0A]/50 transition-colors"
-                >
-                  <td className="px-6 py-4 text-nowrap">
-                    <span className="font-mono text-xs bg-gray-900 px-2 py-1 rounded text-gray-400 border border-gray-700">
-                      {order.id.substring(0, 8)}...
-                    </span>
-                  </td>
-
-                  <td className="px-6 py-4 text-nowrap">
-                    <p className="font-bold text-white mb-0.5">
-                      {order.customer.nama}
-                    </p>
-                    <span className="text-xs text-gray-500">
-                      {order.customer.no_whatsapp}
-                    </span>
-                  </td>
-
-                  <td className="px-6 py-4 text-gray-400 text-xs">
-                    {formatDateTime(order.created_at)}
-                  </td>
-
-                  <td className="px-6 py-4 text-nowrap">
-                    <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">
-                      {order.metode_pembayaran}
-                    </span>
-                  </td>
-
-                  <td className="px-6 py-4 text-white font-medium">
-                    {formatRupiah(order.total_harga)}
-                  </td>
-
-                  <td className="px-6 py-4 text-nowrap">
-                    <span
-                      className={`px-2.5 py-1 text-[10px] font-bold rounded-full border ${getStatusBadge(order.status_order)}`}
-                    >
-                      {order.status_order.replace("_", " ")}
-                    </span>
-                  </td>
-
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => handleViewDetail(order)}
-                      className="inline-flex items-center justify-center p-2 text-gray-400 hover:text-white bg-gray-900 hover:bg-gray-800 border border-gray-700 rounded-lg transition-colors"
-                      title="Proses / Lihat Detail"
-                    >
-                      <Eye size={16} className="mr-2" />
-                      <span className="text-xs font-medium">Detail</span>
-                    </button>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-10 text-center">
+                    <div className="inline-block w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <p className="mt-2 text-xs">Memuat data pesanan...</p>
                   </td>
                 </tr>
-              ))}
+              ) : orders.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-10 text-center text-gray-500 italic"
+                  >
+                    Belum ada data pesanan.
+                  </td>
+                </tr>
+              ) : (
+                orders.map((order) => (
+                  <tr
+                    key={order.id}
+                    className="border-b border-gray-800 hover:bg-[#0A0A0A]/50 transition-colors"
+                  >
+                    <td className="px-6 py-4">
+                      <div
+                        className="font-mono text-xs text-white mb-1 truncate w-32"
+                        title={order.id}
+                      >
+                        #{order.id.split("-")[0]}...
+                      </div>
+                      <div className="text-[11px] text-gray-500">
+                        {formatDate(order.created_at)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-white text-sm">
+                        {order.customer?.nama}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {order.customer?.no_whatsapp}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 font-medium">
+                      <span
+                        className={`px-2 py-1 text-[10px] rounded font-bold ${order.metode_pembayaran === "TRANSFER" ? "bg-blue-500/10 text-blue-500" : "bg-purple-500/10 text-purple-500"}`}
+                      >
+                        {order.metode_pembayaran}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-white font-medium">
+                      {formatRupiah(Number(order.total_harga))}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2.5 py-1 text-[9px] font-bold rounded-full border ${getStatusBadge(order.status_order)}`}
+                      >
+                        {order.status_order}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleViewDetail(order)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0A0A0A] hover:bg-[#B88E2F] text-gray-300 hover:text-white rounded border border-gray-800 hover:border-[#B88E2F] transition-colors text-xs font-medium"
+                      >
+                        <Eye size={14} /> Detail
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -223,6 +223,7 @@ export default function ManajemenPesananPage() {
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         order={selectedOrder}
+        onSuccess={fetchOrders}
       />
     </div>
   );

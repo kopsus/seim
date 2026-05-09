@@ -1,247 +1,288 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import { X, MapPin, CreditCard, Package } from "lucide-react";
+import {
+  X,
+  MapPin,
+  Phone,
+  User,
+  Package,
+  CreditCard,
+  ExternalLink,
+  Calendar,
+} from "lucide-react";
 import { formatRupiah } from "@/utils/formatRupiah";
-import { formatDateTime } from "@/utils/formatDateTime";
+import { getImageUrl } from "@/utils/getImageUrl";
+import axiosInstance from "@/lib/axios";
 
-interface ModalDetailPesananProps {
+interface ModalDetailOrderProps {
   isOpen: boolean;
   onClose: () => void;
   order: any;
+  onSuccess: () => void;
 }
 
-export default function ModalDetailPesanan({
+export default function ModalDetailOrder({
   isOpen,
   onClose,
   order,
-}: ModalDetailPesananProps) {
-  const [newStatus, setNewStatus] = useState("");
-  const [newCodDate, setNewCodDate] = useState("");
-
-  useEffect(() => {
-    if (order) {
-      const timer = setTimeout(() => {
-        setNewStatus(order.status_order);
-
-        if (order.tanggal_cod) {
-          setNewCodDate(order.tanggal_cod.substring(0, 16));
-        } else {
-          setNewCodDate("");
-        }
-      }, 0);
-
-      return () => clearTimeout(timer);
-    }
-  }, [order]);
+  onSuccess,
+}: ModalDetailOrderProps) {
+  const [isUpdating, setIsUpdating] = useState(false);
 
   if (!isOpen || !order) return null;
 
-  const handleSaveData = () => {
-    console.log("Memanggil API untuk mengupdate order:", order.id);
-    console.log("Status disimpan:", newStatus);
+  const handleUpdateStatus = async (newStatus: string) => {
+    const confirmMsg = `Yakin ingin mengubah status pesanan ini menjadi ${newStatus}?`;
+    if (!window.confirm(confirmMsg)) return;
 
-    if (order.metode_pembayaran === "COD") {
-      console.log("Tanggal COD disimpan:", newCodDate);
+    setIsUpdating(true);
+    try {
+      await axiosInstance.put(`/orders/${order.id}/status`, {
+        status: newStatus,
+      });
+      onSuccess();
+      onClose();
+    } catch (error) {
+      console.error("Gagal update status:", error);
+      alert("Terjadi kesalahan saat memperbarui status pesanan.");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
-  const isStatusChanged = newStatus !== order.status_order;
-  const isCodDateChanged =
-    order.metode_pembayaran === "COD" &&
-    newCodDate !==
-      (order.tanggal_cod ? order.tanggal_cod.substring(0, 16) : "");
-  const hasChanges = isStatusChanged || isCodDateChanged;
+  const formatDate = (dateString: string) => {
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(dateString));
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div
-        className="absolute inset-0 bg-black bg-opacity-70 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black bg-opacity-70 backdrop-blur-sm"
         onClick={onClose}
       ></div>
 
-      <div className="bg-[#1A1A1A] border border-gray-800 rounded-2xl w-full max-w-5xl relative z-10 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-6 border-b border-gray-800 bg-[#121212]">
+      <div className="bg-[#1A1A1A] border border-gray-800 rounded-2xl w-full max-w-4xl relative z-10 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between p-5 border-b border-gray-800 bg-[#121212]">
           <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              Detail Pesanan{" "}
-              <span className="text-[#B88E2F] font-mono text-sm ml-2">
-                #{order.id.substring(0, 8)}
-              </span>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              Detail Pesanan
             </h2>
-            <p className="text-xs text-gray-400 mt-1">
-              Dibuat pada: {formatDateTime(order.created_at)}
+            <p className="text-xs text-gray-500 font-mono mt-1">
+              ID: {order.id}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-gray-400 hover:text-white p-1"
           >
             <X size={24} />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto custom-scrollbar flex flex-col md:flex-row gap-6">
-          <div className="md:w-2/3 flex flex-col gap-6">
+        <div className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Kartu Informasi Pelanggan */}
             <div className="bg-[#0A0A0A] p-5 rounded-xl border border-gray-800">
-              <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                <MapPin size={18} className="text-[#B88E2F]" /> Informasi
-                Pengiriman
+              <h3 className="text-sm font-bold text-[#B88E2F] mb-4 uppercase tracking-wider flex items-center gap-2">
+                <User size={16} /> Informasi Pelanggan
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500 mb-1">Nama Pelanggan</p>
-                  <p className="text-white font-medium">
-                    {order.customer?.nama}
-                  </p>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-start gap-3">
+                  <User size={16} className="text-gray-500 mt-0.5" />
+                  <div>
+                    <p className="text-gray-400 text-xs">Nama Lengkap</p>
+                    <p className="text-white font-medium">
+                      {order.customer?.nama}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-gray-500 mb-1">No. WhatsApp</p>
-                  <p className="text-white font-medium">
-                    {order.customer?.no_whatsapp}
-                  </p>
+                <div className="flex items-start gap-3">
+                  <Phone size={16} className="text-gray-500 mt-0.5" />
+                  <div>
+                    <p className="text-gray-400 text-xs">No. WhatsApp</p>
+                    <p className="text-white font-medium">
+                      {order.customer?.no_whatsapp}
+                    </p>
+                  </div>
                 </div>
-                <div className="md:col-span-2">
-                  <p className="text-gray-500 mb-1">Alamat Lengkap</p>
-                  <p className="text-white font-medium leading-relaxed">
-                    {order.customer?.alamat || "-"}
-                  </p>
+                <div className="flex items-start gap-3">
+                  <MapPin size={16} className="text-gray-500 mt-0.5" />
+                  <div>
+                    <p className="text-gray-400 text-xs">Alamat Pengiriman</p>
+                    <p className="text-white font-medium leading-relaxed">
+                      {order.customer?.alamat}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
+            {/* Kartu Informasi Pembayaran */}
             <div className="bg-[#0A0A0A] p-5 rounded-xl border border-gray-800">
-              <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                <Package size={18} className="text-[#B88E2F]" /> Produk yang
-                Dipesan
+              <h3 className="text-sm font-bold text-[#B88E2F] mb-4 uppercase tracking-wider flex items-center gap-2">
+                <CreditCard size={16} /> Informasi Pembayaran
               </h3>
-              <div className="flex flex-col gap-4">
-                {order.items?.map((item: any, index: number) => (
-                  <div
-                    key={index}
-                    className="flex gap-4 border-b border-gray-800 pb-4 last:border-0 last:pb-0"
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center border-b border-gray-800 pb-2">
+                  <span className="text-gray-400">Metode Pembayaran</span>
+                  <span
+                    className={`font-bold ${order.metode_pembayaran === "TRANSFER" ? "text-blue-500" : "text-purple-500"}`}
                   >
-                    <div className="relative w-20 h-20 bg-gray-900 rounded-lg overflow-hidden border border-gray-700 shrink-0">
-                      <Image
-                        src={item.product?.foto?.[0] || "/dummy-shoe.jpg"}
-                        alt={item.product?.nama_produk || "Sepatu"}
-                        fill
-                        className="object-contain p-1"
-                      />
-                    </div>
-                    <div className="flex flex-col justify-center flex-1">
-                      <p className="text-white font-bold text-sm mb-1">
-                        {item.product?.nama_produk}
-                      </p>
-                      <p className="text-xs text-gray-400 mb-2">
-                        Size: {item.product?.size}
-                      </p>
-                      <p className="text-[#B88E2F] font-bold text-sm">
-                        {formatRupiah(item.harga_saat_beli)}
-                      </p>
-                    </div>
+                    {order.metode_pembayaran}
+                  </span>
+                </div>
+
+                {order.metode_pembayaran === "COD" && order.tanggal_cod && (
+                  <div className="flex justify-between items-center border-b border-gray-800 pb-2">
+                    <span className="text-gray-400 flex items-center gap-1">
+                      <Calendar size={14} /> Tanggal COD
+                    </span>
+                    <span className="text-white">
+                      {formatDate(order.tanggal_cod)}
+                    </span>
                   </div>
-                ))}
+                )}
+
+                <div className="flex justify-between items-center border-b border-gray-800 pb-2">
+                  <span className="text-gray-400">Total Tagihan</span>
+                  <span className="text-[#B88E2F] font-bold text-lg">
+                    {formatRupiah(Number(order.total_harga))}
+                  </span>
+                </div>
+
+                {order.metode_pembayaran === "TRANSFER" &&
+                order.bukti_tf_url ? (
+                  <div className="pt-2">
+                    <span className="text-gray-400 block mb-2 text-xs">
+                      Bukti Transfer:
+                    </span>
+                    <a
+                      href={getImageUrl([order.bukti_tf_url])}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-xs bg-blue-500/10 text-blue-500 px-3 py-2 rounded border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
+                    >
+                      <ExternalLink size={14} /> Cek Bukti Transfer
+                    </a>
+                  </div>
+                ) : order.metode_pembayaran === "TRANSFER" &&
+                  !order.bukti_tf_url ? (
+                  <div className="pt-2">
+                    <span className="text-red-500 text-xs bg-red-500/10 px-2 py-1 rounded">
+                      Belum mengunggah bukti transfer
+                    </span>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
 
-          <div className="md:w-1/3 flex flex-col gap-6">
-            <div className="bg-[#0A0A0A] p-5 rounded-xl border border-gray-800 flex flex-col gap-4">
-              <h3 className="text-white font-bold flex items-center gap-2">
-                Kelola Pesanan
-              </h3>
+          {/* Tabel Daftar Produk */}
+          <div>
+            <h3 className="text-sm font-bold text-[#B88E2F] mb-3 uppercase tracking-wider flex items-center gap-2">
+              <Package size={16} /> Produk Dipesan
+            </h3>
+            <div className="bg-[#0A0A0A] rounded-xl border border-gray-800 overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-[#121212] text-gray-400 border-b border-gray-800">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Produk</th>
+                    <th className="px-4 py-3 font-medium text-center">Size</th>
+                    <th className="px-4 py-3 font-medium text-right">
+                      Harga Satuan
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800">
+                  {order.items?.map((item: any) => (
+                    <tr key={item.id}>
+                      <td className="px-4 py-3 flex items-center gap-3">
+                        <div className="relative w-10 h-10 bg-gray-900 rounded overflow-hidden border border-gray-800">
+                          <Image
+                            src={getImageUrl(item.product?.foto)}
+                            alt={item.product?.nama_produk || "Produk"}
+                            fill
+                            className="object-cover"
+                            unoptimized={process.env.NODE_ENV === "development"}
+                          />
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">
+                            {item.product?.nama_produk}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Kondisi: {item.product?.kondisi}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-white text-center">
+                        {item.product?.size}
+                      </td>
+                      <td className="px-4 py-3 text-white text-right font-medium">
+                        {formatRupiah(Number(item.harga_saat_beli))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
-              <div>
-                <label className="block text-xs text-gray-500 mb-2">
-                  Ubah Status
-                </label>
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full bg-[#1A1A1A] text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-[#B88E2F] font-medium text-sm"
+        {/* Footer: Area Ubah Status */}
+        <div className="p-5 border-t border-gray-800 bg-[#121212] flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-400">Status Saat Ini:</span>
+            <span className="px-3 py-1 bg-gray-800 text-white text-xs font-bold rounded uppercase tracking-wider">
+              {order.status_order}
+            </span>
+          </div>
+
+          <div className="flex gap-2 w-full md:w-auto">
+            {order.status_order === "PENDING" && (
+              <>
+                <button
+                  disabled={isUpdating}
+                  onClick={() => handleUpdateStatus("DIPROSES")}
+                  className="flex-1 md:flex-none px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <option value="PENDING">Pending (Menunggu Bayar)</option>
-                  <option value="MENUNGGU_KONFIRMASI">
-                    Menunggu Konfirmasi
-                  </option>
-                  <option value="SELESAI">Selesai / Dikirim</option>
-                  <option value="BATAL">Batal</option>
-                </select>
-              </div>
+                  Proses Pesanan
+                </button>
+                <button
+                  disabled={isUpdating}
+                  onClick={() => handleUpdateStatus("BATAL")}
+                  className="flex-1 md:flex-none px-4 py-2 bg-transparent border border-red-500/50 hover:bg-red-500/10 text-red-500 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Batalkan
+                </button>
+              </>
+            )}
 
-              {order.metode_pembayaran === "COD" && (
-                <div>
-                  <label className="block text-xs text-yellow-500 mb-2">
-                    Ubah Jadwal COD
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={newCodDate}
-                    onChange={(e) => setNewCodDate(e.target.value)}
-                    className="w-full bg-[#1A1A1A] text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-[#B88E2F] text-sm"
-                  />
-                </div>
-              )}
-
-              <button
-                onClick={handleSaveData}
-                disabled={!hasChanges}
-                className="w-full mt-2 py-3 rounded-lg font-medium text-white bg-[#B88E2F] hover:bg-[#9A7526] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Simpan Perubahan
-              </button>
-            </div>
-
-            <div className="bg-[#0A0A0A] p-5 rounded-xl border border-gray-800">
-              <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                <CreditCard size={18} className="text-[#B88E2F]" /> Pembayaran
-              </h3>
-
-              <div className="flex justify-between items-center border-b border-gray-800 pb-3 mb-3 text-sm">
-                <span className="text-gray-400">Metode</span>
-                <span className="text-white font-bold uppercase">
-                  {order.metode_pembayaran}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center text-base">
-                <span className="text-gray-300">Total Tagihan</span>
-                <span className="text-[#B88E2F] font-bold text-lg">
-                  {formatRupiah(order.total_harga)}
-                </span>
-              </div>
-            </div>
-
-            {order.metode_pembayaran === "TRANSFER" && (
-              <div className="bg-[#0A0A0A] p-5 rounded-xl border border-gray-800">
-                <h3 className="text-white font-bold mb-4">Bukti Transfer</h3>
-                {order.bukti_tf_url ? (
-                  <div className="relative w-full aspect-3/4 bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
-                    <Image
-                      src={order.bukti_tf_url}
-                      alt="Bukti Transfer"
-                      fill
-                      className="object-cover"
-                    />
-                    <a
-                      href={order.bukti_tf_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-3 py-1.5 rounded backdrop-blur-md hover:bg-black transition-colors"
-                    >
-                      Lihat Penuh
-                    </a>
-                  </div>
-                ) : (
-                  <div className="w-full p-6 border-2 border-dashed border-gray-700 rounded-lg text-center">
-                    <p className="text-gray-500 text-sm">
-                      Pelanggan belum mengunggah bukti pembayaran.
-                    </p>
-                  </div>
-                )}
-              </div>
+            {order.status_order === "DIPROSES" && (
+              <>
+                <button
+                  disabled={isUpdating}
+                  onClick={() => handleUpdateStatus("SELESAI")}
+                  className="flex-1 md:flex-none px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Tandai Selesai
+                </button>
+                <button
+                  disabled={isUpdating}
+                  onClick={() => handleUpdateStatus("BATAL")}
+                  className="flex-1 md:flex-none px-4 py-2 bg-transparent border border-red-500/50 hover:bg-red-500/10 text-red-500 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Batalkan
+                </button>
+              </>
             )}
           </div>
         </div>

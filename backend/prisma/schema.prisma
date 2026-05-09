@@ -24,7 +24,7 @@ enum MetodeBayar {
 
 enum StatusOrder {
   PENDING
-  MENUNGGU_KONFIRMASI
+  DIPROSES
   SELESAI
   BATAL
 }

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   checkout,
+  getOrderById,
   getOrders,
   updateOrderStatus,
   uploadPaymentReceipt,
@@ -22,6 +23,7 @@ router.post(
 
 // PROTECTED ROUTES (Untuk Admin & Kasir)
 router.get("/", verifyToken, authorizeRoles("ADMIN", "KASIR"), getOrders);
+router.get("/:id", verifyToken, authorizeRoles("ADMIN", "KASIR"), getOrderById);
 router.put(
   "/:id/status",
   verifyToken,
