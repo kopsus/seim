@@ -29,6 +29,8 @@ export default function ProductCard({
   const { addItem } = useCartStore();
   const [isAdded, setIsAdded] = useState(false);
 
+  console.log("img url", imageUrl);
+
   const handleAddToCart = () => {
     addItem({
       id: id,
@@ -72,6 +74,7 @@ export default function ProductCard({
             src={imageUrl}
             alt={name}
             fill
+            unoptimized
             sizes="(max-width: 768px) 50vw, 25vw"
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />

@@ -12,6 +12,9 @@ import {
   Phone,
   X,
 } from "lucide-react";
+import { Category } from "@/types/category";
+import { useEffect, useState } from "react";
+import axiosInstance from "@/lib/axios";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -23,6 +26,20 @@ export default function Sidebar({
   onClose = () => {},
 }: SidebarProps) {
   const pathname = usePathname();
+
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axiosInstance.get("/categories");
+        setCategories(response.data.data);
+      } catch (error) {
+        console.error("Gagal mengambil kategori:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const getMenuClass = (path: string) => {
     const isActive = pathname === path;
@@ -87,31 +104,19 @@ export default function Sidebar({
               Kategori
             </p>
           </div>
-
-          <Link
-            href="/kategori/sneakers"
-            onClick={onClose}
-            className={getSubMenuClass("/kategori/sneakers")}
-          >
-            <Layers size={18} />
-            <span className="text-sm">Sneakers</span>
-          </Link>
-          <Link
-            href="/kategori/casual"
-            onClick={onClose}
-            className={getSubMenuClass("/kategori/casual")}
-          >
-            <Layers size={18} />
-            <span className="text-sm">Casual</span>
-          </Link>
-          <Link
-            href="/kategori/sport"
-            onClick={onClose}
-            className={getSubMenuClass("/kategori/sport")}
-          >
-            <Layers size={18} />
-            <span className="text-sm">Sport</span>
-          </Link>
+          {categories.map((cat) => (
+            <Link
+              key={cat.id}
+              href={`/kategori/${cat.nama_kategori.toLowerCase()}`}
+              onClick={onClose}
+              className={getSubMenuClass(
+                `/kategori/${cat.nama_kategori.toLowerCase()}`,
+              )}
+            >
+              <Layers size={18} />
+              <span className="text-sm">{cat.nama_kategori}</span>
+            </Link>
+          ))}
 
           <div className="border-t border-gray-800 my-4" />
 

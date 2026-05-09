@@ -9,7 +9,7 @@ export type Product = {
   size: string;
   harga: string;
   status: string;
-  badge: string;
+  badge?: "NEW" | "SOLD OUT" | null;
   foto: string[];
   created_at: string;
   updated_at: string;
