@@ -121,14 +121,14 @@ export default function DashboardSidebar({
             <Tag size={18} />
             <span className="text-sm">Promo</span>
           </Link> */}
-          <Link
+          {/* <Link
             href="/dashboard/jadwal-cod"
             onClick={onClose}
             className={getMenuClass("/dashboard/jadwal-cod")}
           >
             <Calendar size={18} />
             <span className="text-sm">Jadwal COD</span>
-          </Link>
+          </Link> */}
 
           <div className="border-t border-gray-800 my-4" />
 

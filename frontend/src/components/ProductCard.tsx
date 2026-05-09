@@ -29,8 +29,6 @@ export default function ProductCard({
   const { addItem } = useCartStore();
   const [isAdded, setIsAdded] = useState(false);
 
-  console.log("img url", imageUrl);
-
   const handleAddToCart = () => {
     addItem({
       id: id,

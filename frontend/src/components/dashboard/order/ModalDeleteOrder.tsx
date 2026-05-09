@@ -20,8 +20,6 @@ export default function ModalDeleteOrder({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  console.log("Data order", order);
-
   if (!isOpen || !order) return null;
 
   const handleDelete = async () => {

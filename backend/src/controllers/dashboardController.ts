@@ -6,27 +6,22 @@ export const getDashboardStats = async (
   res: Response,
 ): Promise<void> => {
   try {
-    // Hitung total pendapatan (Hanya dari pesanan yang 'SELESAI')
     const revenueResult = await prisma.order.aggregate({
       _sum: { total_harga: true },
       where: { status_order: "SELESAI" },
     });
-    // Jika belum ada pendapatan, set ke 0
     const totalRevenue = revenueResult._sum.total_harga || 0;
 
-    // Hitung pesanan yang butuh dikonfirmasi kasir
     const pendingOrders = await prisma.order.count({
       where: {
-        status_order: { in: ["PENDING", "MENUNGGU_KONFIRMASI"] },
+        status_order: { in: ["PENDING"] },
       },
     });
 
-    // Hitung total sepatu yang sudah terjual
     const soldProducts = await prisma.product.count({
       where: { status: "SOLD" },
     });
 
-    // Hitung total sepatu yang masih tersedia
     const readyProducts = await prisma.product.count({
       where: { status: "READY" },
     });

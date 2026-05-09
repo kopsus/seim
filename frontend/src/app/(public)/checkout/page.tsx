@@ -142,8 +142,6 @@ export default function CheckoutPage() {
       router.push("/");
     } catch (error: any) {
       if (error.response && error.response.status === 400) {
-        console.log("Validasi backend gagal, menampilkan error ke form UI...");
-
         if (error.response.data?.errors) {
           const backendErrors = error.response.data.errors;
           const newErrors: Record<string, string> = {};

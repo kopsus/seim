@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   DollarSign,
@@ -7,40 +8,69 @@ import {
   PackageCheck,
   PackageSearch,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { formatRupiah } from "@/utils/formatRupiah";
+import axiosInstance from "@/lib/axios";
 
 export default function DashboardUtamaPage() {
-  const dashboardStats = {
-    totalPendapatan: 15500000,
-    pesananMenunggu: 5,
-    sepatuTerjual: 24,
-    sepatuReady: 112,
-  };
+  // State untuk menyimpan data statistik dari backend
+  const [dashboardStats, setDashboardStats] = useState({
+    totalPendapatan: 0,
+    pesananMenunggu: 0,
+    sepatuTerjual: 0,
+    sepatuReady: 0,
+  });
 
-  const recentOrders = [
-    {
-      id: "ord-8f7a-1234",
-      nama_pelanggan: "Budi Santoso",
-      total_harga: 1599000,
-      status: "MENUNGGU_KONFIRMASI",
-      waktu: "Hari ini, 10:15 WIB",
-    },
-    {
-      id: "ord-2b3c-5678",
-      nama_pelanggan: "Siti Aminah",
-      total_harga: 549000,
-      status: "PENDING",
-      waktu: "Hari ini, 09:30 WIB",
-    },
-    {
-      id: "ord-9d8e-9012",
-      nama_pelanggan: "Andi Saputra",
-      total_harga: 1100000,
-      status: "SELESAI",
-      waktu: "Kemarin, 14:20 WIB",
-    },
-  ];
+  // State untuk menyimpan pesanan terbaru
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+
+  // State Loading
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+
+        // Memanggil 2 API sekaligus agar lebih cepat (Stats dan 5 Pesanan Terbaru)
+        const [statsResponse, ordersResponse] = await Promise.all([
+          axiosInstance.get("/dashboard/stats"),
+          axiosInstance.get("/orders", { params: { page: 1, limit: 5 } }),
+        ]);
+
+        // 1. Set Data Statistik
+        const statsData = statsResponse.data.data;
+        setDashboardStats({
+          totalPendapatan: statsData.totalRevenue,
+          pesananMenunggu: statsData.pendingOrders,
+          sepatuTerjual: statsData.soldProducts,
+          sepatuReady: statsData.readyProducts,
+        });
+
+        // 2. Set Data Pesanan Terbaru
+        setRecentOrders(ordersResponse.data.data);
+      } catch (error) {
+        console.error("Gagal mengambil data dashboard:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // Format Tanggal untuk tabel
+  const formatDate = (dateString: string) => {
+    return (
+      new Intl.DateTimeFormat("id-ID", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(dateString)) + " WIB"
+    );
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -50,13 +80,26 @@ export default function DashboardUtamaPage() {
         return "bg-blue-500/10 text-blue-500 border-blue-500/20";
       case "SELESAI":
         return "bg-green-500/10 text-green-500 border-green-500/20";
+      case "BATAL":
+        return "bg-red-500/10 text-red-500 border-red-500/20";
       default:
         return "bg-gray-500/10 text-gray-500 border-gray-500/20";
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="w-full h-[70vh] flex flex-col items-center justify-center">
+        <Loader2 className="w-12 h-12 text-[#B88E2F] animate-spin mb-4" />
+        <p className="text-gray-400 font-medium animate-pulse">
+          Menyiapkan ringkasan bisnis Anda...
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full relative space-y-8">
+    <div className="w-full relative space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-2xl font-bold text-white">Ringkasan Dasbor</h1>
         <p className="text-sm text-gray-400 mt-1">
@@ -64,6 +107,7 @@ export default function DashboardUtamaPage() {
         </p>
       </div>
 
+      {/* --- KARTU STATISTIK --- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-[#1A1A1A] p-6 rounded-xl border border-gray-800 flex items-center gap-4 hover:border-gray-700 transition-colors">
           <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
@@ -71,7 +115,10 @@ export default function DashboardUtamaPage() {
           </div>
           <div>
             <p className="text-sm text-gray-400 mb-1">Total Pendapatan</p>
-            <h3 className="text-xl font-bold text-white">
+            <h3
+              className="text-xl font-bold text-white truncate max-w-[120px]"
+              title={formatRupiah(dashboardStats.totalPendapatan)}
+            >
               {formatRupiah(dashboardStats.totalPendapatan)}
             </h3>
           </div>
@@ -117,11 +164,13 @@ export default function DashboardUtamaPage() {
         </div>
       </div>
 
+      {/* --- TABEL PESANAN TERBARU --- */}
       <div className="bg-[#1A1A1A] rounded-xl border border-gray-800 overflow-hidden">
         <div className="p-6 border-b border-gray-800 flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">Pesanan Terbaru</h2>
+          {/* Ubah href jika rute tabel order Anda berbeda, misalnya /dashboard/pesanan */}
           <Link
-            href="/dashboard/order"
+            href="/dashboard/orders"
             className="text-sm text-[#B88E2F] hover:text-[#9A7526] font-medium flex items-center transition-colors"
           >
             Lihat Semua <ArrowRight size={16} className="ml-1" />
@@ -150,32 +199,45 @@ export default function DashboardUtamaPage() {
               </tr>
             </thead>
             <tbody>
-              {recentOrders.map((order) => (
-                <tr
-                  key={order.id}
-                  className="border-b border-gray-800 hover:bg-[#0A0A0A]/50 transition-colors"
-                >
-                  <td className="px-6 py-4 text-nowrap">
-                    <span className="font-mono text-xs bg-gray-900 px-2 py-1 rounded text-gray-400 border border-gray-700">
-                      {order.id.substring(0, 8)}...
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 font-medium text-white text-nowrap">
-                    {order.nama_pelanggan}
-                  </td>
-                  <td className="px-6 py-4 text-xs">{order.waktu}</td>
-                  <td className="px-6 py-4 font-medium text-white">
-                    {formatRupiah(order.total_harga)}
-                  </td>
-                  <td className="px-6 py-4 text-nowrap">
-                    <span
-                      className={`px-2.5 py-1 text-[10px] font-bold rounded-full border ${getStatusBadge(order.status)}`}
-                    >
-                      {order.status.replace("_", " ")}
-                    </span>
+              {recentOrders.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-10 text-center text-gray-500"
+                  >
+                    Belum ada pesanan masuk.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                recentOrders.map((order) => (
+                  <tr
+                    key={order.id}
+                    className="border-b border-gray-800 hover:bg-[#0A0A0A]/50 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-nowrap">
+                      <span className="font-mono text-xs bg-gray-900 px-2 py-1 rounded text-gray-400 border border-gray-700">
+                        {order.id.split("-")[0]}...
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 font-medium text-white text-nowrap">
+                      {order.customer?.nama || "Pelanggan"}
+                    </td>
+                    <td className="px-6 py-4 text-xs">
+                      {formatDate(order.created_at)}
+                    </td>
+                    <td className="px-6 py-4 font-medium text-white">
+                      {formatRupiah(Number(order.total_harga))}
+                    </td>
+                    <td className="px-6 py-4 text-nowrap">
+                      <span
+                        className={`px-2.5 py-1 text-[9px] font-bold rounded-full border ${getStatusBadge(order.status_order)}`}
+                      >
+                        {order.status_order.replace("_", " ")}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
