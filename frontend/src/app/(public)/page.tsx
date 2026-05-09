@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   ChevronLeft,
@@ -13,64 +13,67 @@ import {
   Award,
   Tag,
   RefreshCcw,
+  Loader2,
 } from "lucide-react";
-
-const FLIPBOOK_PAGES = [
-  {
-    id: 1,
-    left: {
-      title: "SNEAKERS",
-      subtitle: "NEW ARRIVAL",
-      badge: "EDISI MEI 2026",
-      image:
-        "https://images.tokopedia.net/img/cache/700/VqbcmM/2024/10/19/373fcf82-b274-4d62-bd85-5d5ee1c4c3fc.jpg.webp", // Gambar kiri
-      pageNum: "01",
-    },
-    right: {
-      image:
-        "https://images.tokopedia.net/img/cache/700/VqbcmM/2024/10/19/373fcf82-b274-4d62-bd85-5d5ee1c4c3fc.jpg.webp", // Gambar kanan
-      pageNum: "02",
-    },
-  },
-  {
-    id: 2,
-    left: {
-      title: "CASUAL",
-      subtitle: "WEEKEND VIBES",
-      badge: "BEST SELLER",
-      image:
-        "https://images.tokopedia.net/img/cache/700/VqbcmM/2025/2/3/7977906b-16b8-4833-9565-d9a38ed0803d.jpg.webp",
-      pageNum: "03",
-    },
-    right: {
-      image:
-        "https://images.tokopedia.net/img/cache/700/VqbcmM/2025/2/3/7977906b-16b8-4833-9565-d9a38ed0803d.jpg.webp",
-      pageNum: "04",
-    },
-  },
-  {
-    id: 3,
-    left: {
-      title: "SPORT",
-      subtitle: "RUNNING GEAR",
-      badge: "LIMITED STOCK",
-      image:
-        "https://images.tokopedia.net/img/cache/700/product-1/2019/8/7/814705/814705_348b0d5e-6cd4-4561-965b-2505caabea8d_1280_1280.jpg.webp",
-      pageNum: "05",
-    },
-    right: {
-      image:
-        "https://images.tokopedia.net/img/cache/700/product-1/2019/8/7/814705/814705_348b0d5e-6cd4-4561-965b-2505caabea8d_1280_1280.jpg.webp",
-      pageNum: "06",
-    },
-  },
-];
+import axiosInstance from "@/lib/axios";
+import { getImageUrl } from "@/utils/getImageUrl";
 
 export default function HomePage() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // 1. Ambil Data Produk dari Backend
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        // Anda bisa menambahkan parameter ?status=READY jika hanya ingin menampilkan barang yang belum terjual
+        const response = await axiosInstance.get("/products");
+        setProducts(response.data.data);
+      } catch (error) {
+        console.error("Gagal mengambil produk:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  // 2. Ubah Data Produk Asli menjadi Format Flipbook
+  const flipbookPages = products.map((product, index) => {
+    // Foto Kiri: Foto Index ke-0
+    const leftImage = getImageUrl(product.foto ? [product.foto[0]] : []);
+
+    // Foto Kanan: Foto Index ke-1 (jika ada). Jika tidak ada, pakai foto pertama lagi.
+    const rightImage = getImageUrl(
+      product.foto && product.foto.length > 1
+        ? [product.foto[1]]
+        : [product.foto[0]],
+    );
+
+    return {
+      id: product.id,
+      left: {
+        // Tampilkan nama produk, jika terlalu panjang potong agar desain flipbook tidak berantakan
+        title:
+          product.nama_produk.length > 15
+            ? product.nama_produk.substring(0, 15) + ".."
+            : product.nama_produk,
+        subtitle: product.kategori?.nama_kategori || "Koleksi Pilihan",
+        badge: product.badge || product.status,
+        image: leftImage,
+        pageNum: String(index * 2 + 1).padStart(2, "0"),
+      },
+      right: {
+        image: rightImage,
+        pageNum: String(index * 2 + 2).padStart(2, "0"),
+      },
+    };
+  });
+
   const nextSlide = () => {
-    if (currentIndex < FLIPBOOK_PAGES.length - 1) {
+    if (currentIndex < flipbookPages.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     }
   };
@@ -81,10 +84,34 @@ export default function HomePage() {
     }
   };
 
-  const currentSpread = FLIPBOOK_PAGES[currentIndex];
+  // Tampilan Loading
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center min-h-[70vh]">
+        <Loader2 className="w-12 h-12 text-[#B88E2F] animate-spin mb-4" />
+        <p className="text-gray-400 font-medium tracking-wider animate-pulse">
+          Memuat Katalog Majalah SEIM...
+        </p>
+      </div>
+    );
+  }
+
+  // Tampilan Jika Belum Ada Produk
+  if (flipbookPages.length === 0) {
+    return (
+      <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center min-h-[70vh]">
+        <p className="text-gray-400">
+          Belum ada produk yang tersedia saat ini.
+        </p>
+      </div>
+    );
+  }
+
+  const currentSpread = flipbookPages[currentIndex];
 
   return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col min-h-full">
+    <div className="w-full max-w-6xl mx-auto flex flex-col min-h-full px-4 md:px-0">
+      {/* Header Majalah */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-8 gap-4">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-white uppercase tracking-widest leading-tight">
@@ -97,11 +124,11 @@ export default function HomePage() {
 
         <div className="hidden md:flex items-center space-x-6 text-gray-400">
           <div className="flex items-center bg-[#1A1A1A] px-4 py-2 rounded-lg border border-gray-800 text-sm">
-            <span className="mr-3">Katalog Mei 2026</span>
+            <span className="mr-3">Katalog Terbaru</span>
             <Calendar size={16} />
           </div>
           <span className="text-sm font-medium">
-            {currentIndex + 1} / {FLIPBOOK_PAGES.length}
+            {currentIndex + 1} / {flipbookPages.length}
           </span>
           <div className="flex items-center space-x-3">
             <button className="hover:text-white transition-colors">
@@ -117,6 +144,7 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Area Flipbook Inti */}
       <div className="relative flex items-center justify-center w-full mb-12 group">
         <button
           onClick={prevSlide}
@@ -131,24 +159,30 @@ export default function HomePage() {
         </button>
 
         <div className="w-full bg-[#EBE7DF] rounded-sm shadow-2xl flex flex-col md:flex-row overflow-hidden relative border border-[#D1CCC0] min-h-100 md:min-h-125">
+          {/* HALAMAN KIRI */}
           <div className="w-full md:w-1/2 p-8 md:p-12 relative flex flex-col border-b md:border-b-0 md:border-r border-[#D1CCC0] shadow-[inset_-15px_0_15px_-15px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-left-4 duration-500">
-            <h1 className="text-5xl md:text-6xl font-black text-[#1A1A1A] tracking-tighter mb-1">
+            <h1 className="text-4xl md:text-5xl font-black text-[#1A1A1A] tracking-tighter mb-1 uppercase">
               {currentSpread.left.title}
             </h1>
-            <h2 className="text-xl md:text-2xl text-[#1A1A1A] font-semibold tracking-widest mb-6">
+            <h2 className="text-xl md:text-2xl text-[#1A1A1A] font-semibold tracking-widest mb-6 uppercase">
               {currentSpread.left.subtitle}
             </h2>
-            <span className="inline-block bg-[#B88E2F] text-white text-xs font-bold px-3 py-1 rounded-sm w-max mb-8 shadow-md">
-              {currentSpread.left.badge}
-            </span>
+
+            {/* Hanya tampilkan badge jika data tidak kosong */}
+            {currentSpread.left.badge && (
+              <span className="inline-block bg-[#B88E2F] text-white text-xs font-bold px-3 py-1 rounded-sm w-max mb-8 shadow-md uppercase">
+                {currentSpread.left.badge}
+              </span>
+            )}
 
             <div className="relative w-full flex-1 min-h-50">
               <Image
-                key={currentSpread.left.image + currentIndex}
+                key={`left-${currentSpread.left.image}-${currentIndex}`}
                 src={currentSpread.left.image}
                 alt="Sepatu Kiri"
                 fill
                 className="object-contain drop-shadow-[0_20px_20px_rgba(0,0,0,0.5)] hover:-translate-y-2 transition-transform duration-500"
+                unoptimized={process.env.NODE_ENV === "development"}
               />
             </div>
 
@@ -157,14 +191,16 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* HALAMAN KANAN */}
           <div className="w-full md:w-1/2 p-8 md:p-12 relative flex flex-col shadow-[inset_15px_0_15px_-15px_rgba(0,0,0,0.1)] animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="relative w-full flex-1 min-h-62.5">
               <Image
-                key={currentSpread.right.image + currentIndex}
+                key={`right-${currentSpread.right.image}-${currentIndex}`}
                 src={currentSpread.right.image}
                 alt="Sepatu Kanan"
                 fill
                 className="object-contain drop-shadow-[0_20px_20px_rgba(0,0,0,0.5)] hover:-translate-y-2 transition-transform duration-500 scale-110"
+                unoptimized={process.env.NODE_ENV === "development"}
               />
             </div>
             <div className="text-center text-xs text-gray-500 mt-6 font-medium tracking-widest uppercase">
@@ -175,9 +211,9 @@ export default function HomePage() {
 
         <button
           onClick={nextSlide}
-          disabled={currentIndex === FLIPBOOK_PAGES.length - 1}
+          disabled={currentIndex === flipbookPages.length - 1}
           className={`absolute right-0 md:-right-6 z-10 bg-[#1A1A1A] p-3 md:p-4 rounded-full border border-gray-800 text-white shadow-xl md:opacity-0 md:group-hover:opacity-100 transition-all ${
-            currentIndex === FLIPBOOK_PAGES.length - 1
+            currentIndex === flipbookPages.length - 1
               ? "opacity-50 cursor-not-allowed"
               : "hover:bg-[#B88E2F]"
           }`}
@@ -186,6 +222,7 @@ export default function HomePage() {
         </button>
       </div>
 
+      {/* Value Proposition Footer */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-6 border-y border-gray-800 mt-auto">
         <div className="flex items-center space-x-4">
           <div className="text-[#B88E2F]">
