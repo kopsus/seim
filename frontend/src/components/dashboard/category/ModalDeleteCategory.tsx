@@ -4,7 +4,7 @@ import { useState } from "react";
 import axiosInstance from "@/lib/axios";
 import { X, AlertTriangle } from "lucide-react";
 
-interface ModalDeleteCategoriProps {
+interface ModalDeleteCategoryProps {
   isOpen: boolean;
   onClose: () => void;
   category: any;
@@ -16,7 +16,7 @@ export default function ModalDeleteCategory({
   onClose,
   category,
   onSuccess,
-}: ModalDeleteCategoriProps) {
+}: ModalDeleteCategoryProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 

@@ -1,19 +1,56 @@
 "use client";
 
+import axiosInstance from "@/lib/axios";
 import { X, AlertTriangle } from "lucide-react";
+import { useState } from "react";
 
 interface ModalDeleteUserProps {
   isOpen: boolean;
   onClose: () => void;
   user: any;
+  onSuccess: () => void;
 }
 
 export default function ModalDeleteUser({
   isOpen,
   onClose,
   user,
+  onSuccess,
 }: ModalDeleteUserProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   if (!isOpen || !user) return null;
+
+  const handleDelete = async () => {
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      await axiosInstance.delete(`/users/${user.id}`);
+      onSuccess();
+      handleClose();
+    } catch (error: any) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        setErrorMessage(error.response.data.message);
+      } else {
+        setErrorMessage(
+          "Gagal menghapus Pengguna. Terjadi kesalahan pada server.",
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    setErrorMessage("");
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
@@ -43,22 +80,36 @@ export default function ModalDeleteUser({
           <p className="text-gray-400 text-sm mb-1">
             Anda yakin ingin menghapus akun staf ini?
           </p>
-          <p className="text-white font-bold mb-6 text-lg">@{user.username}</p>
-          <p className="text-xs text-red-400 bg-red-500/10 p-3 rounded-lg border border-red-500/20 w-full mb-2">
-            Perhatian: Pengguna ini tidak akan bisa lagi mengakses sistem kasir
-            dan dashboard.
-          </p>
+          <p className="text-white font-bold mb-6 text-lg">{user.username}</p>
+          {errorMessage ? (
+            <div className="text-xs text-red-500 bg-red-500/10 p-3 rounded-lg border border-red-500/20 w-full mb-2 text-left">
+              <strong>Penghapusan Gagal:</strong> {errorMessage}
+            </div>
+          ) : (
+            <p className="text-xs text-red-400 bg-red-500/10 p-3 rounded-lg border border-red-500/20 w-full mb-2">
+              Perhatian: Tindakan ini tidak dapat dibatalkan.
+            </p>
+          )}
         </div>
 
         <div className="p-4 border-t border-gray-800 bg-[#121212] flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-lg font-medium text-white bg-gray-800 hover:bg-gray-700 transition-colors"
+            disabled={isLoading}
+            className="flex-1 py-3 rounded-lg font-medium text-white bg-gray-800 hover:bg-gray-700 transition-colors disabled:opacity-50"
           >
             Batal
           </button>
-          <button className="flex-1 py-3 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors shadow-lg shadow-red-900/20">
-            Ya, Hapus
+          <button
+            onClick={handleDelete}
+            disabled={isLoading}
+            className="flex-1 py-3 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors shadow-lg shadow-red-900/20 disabled:opacity-50 flex justify-center items-center"
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              "Ya, Hapus"
+            )}
           </button>
         </div>
       </div>

@@ -109,9 +109,9 @@ export default function DashboardSidebar({
           >
             <ShoppingBag size={18} />
             <span className="text-sm">Order</span>
-            <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+            {/* <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
               3
-            </span>
+            </span> */}
           </Link>
           {/* <Link
             href="/dashboard/promo"

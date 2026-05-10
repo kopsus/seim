@@ -7,12 +7,14 @@ interface ModalEditUserProps {
   isOpen: boolean;
   onClose: () => void;
   user: any;
+  onSuccess?: () => void;
 }
 
 export default function ModalEditUser({
   isOpen,
   onClose,
   user,
+  onSuccess,
 }: ModalEditUserProps) {
   const [formData, setFormData] = useState({
     username: "",
@@ -114,7 +116,14 @@ export default function ModalEditUser({
           >
             Batal
           </button>
-          <button className="px-6 py-2.5 rounded-lg font-medium bg-[#B88E2F] hover:bg-[#9A7526] text-white transition-colors">
+          <button
+            onClick={() => {
+              if (onSuccess) {
+                onSuccess();
+              }
+            }}
+            className="px-6 py-2.5 rounded-lg font-medium bg-[#B88E2F] hover:bg-[#9A7526] text-white transition-colors"
+          >
             Simpan Perubahan
           </button>
         </div>

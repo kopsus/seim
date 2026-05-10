@@ -116,7 +116,7 @@ export default function DashboardUtamaPage() {
           <div>
             <p className="text-sm text-gray-400 mb-1">Total Pendapatan</p>
             <h3
-              className="text-xl font-bold text-white truncate max-w-[120px]"
+              className="text-xl font-bold text-white truncate max-w-30"
               title={formatRupiah(dashboardStats.totalPendapatan)}
             >
               {formatRupiah(dashboardStats.totalPendapatan)}
