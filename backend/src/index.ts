@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")));
+app.use("/uploads", express.static("/root/uploads"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
