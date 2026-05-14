@@ -1,9 +1,8 @@
-// src/components/dashboard/ModalEditProduk.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { X, Upload, Trash2, ImageIcon, AlertCircle } from "lucide-react";
+import { X, Upload, Trash2, ImageIcon, AlertCircle, Plus } from "lucide-react";
 import axiosInstance from "@/lib/axios";
 import { getImageUrl } from "@/utils/getImageUrl";
 
@@ -26,9 +25,11 @@ export default function ModalEditProduk({
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [condition, setCondition] = useState("");
-  const [size, setSize] = useState("");
   const [status, setStatus] = useState("");
   const [badge, setBadge] = useState("");
+
+  // State sizes dipertahankan sebagai array of objects
+  const [sizes, setSizes] = useState([{ size: "", stock: 0 }]);
 
   // --- STATE FOTO ---
   const [existingPhotos, setExistingPhotos] = useState<string[]>([]); // Foto yang masih ada di server
@@ -47,12 +48,23 @@ export default function ModalEditProduk({
         setPrice(product.harga || "");
         setDescription(product.deskripsi || "");
         setCondition(product.kondisi || "New");
-        setSize(product.size || "");
         setStatus(product.status || "READY");
         setBadge(product.badge || "");
         setExistingPhotos(product.foto || []); // Ambil foto dari database
         setNewPhotos([]);
         setNewPreviewUrls([]);
+
+        // Mengisi state ukuran dari data product.sizes
+        if (product.sizes && product.sizes.length > 0) {
+          setSizes(
+            product.sizes.map((s: any) => ({
+              size: s.size,
+              stock: s.stock,
+            })),
+          );
+        } else {
+          setSizes([{ size: "", stock: 0 }]);
+        }
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -66,6 +78,31 @@ export default function ModalEditProduk({
         .then((res) => setCategories(res.data.data));
     }
   }, [isOpen]);
+
+  // --- FUNGSI HANDLER UNTUK UKURAN & STOK DINAMIS ---
+  const handleAddSize = () => {
+    setSizes([...sizes, { size: "", stock: 0 }]);
+  };
+
+  const handleRemoveSize = (indexToRemove: number) => {
+    if (sizes.length === 1) return; // Minimal harus ada 1 ukuran
+    setSizes(sizes.filter((_, index) => index !== indexToRemove));
+  };
+
+  const handleSizeChange = (
+    index: number,
+    field: "size" | "stock",
+    value: string,
+  ) => {
+    const newSizes = [...sizes];
+    if (field === "stock") {
+      newSizes[index][field] = parseInt(value, 10) || 0; // Pastikan jadi angka
+    } else {
+      newSizes[index][field] = value;
+    }
+    setSizes(newSizes);
+  };
+  // ---------------------------------------------------
 
   if (!isOpen || !product) return null;
 
@@ -99,6 +136,14 @@ export default function ModalEditProduk({
   // --- SUBMIT UPDATE ---
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validasi tambahan: Pastikan size tidak kosong
+    const hasEmptySize = sizes.some((s) => s.size.trim() === "");
+    if (hasEmptySize) {
+      alert("Mohon isi semua nama varian ukuran (Size) yang ditambahkan.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -108,12 +153,11 @@ export default function ModalEditProduk({
       formData.append("price", price);
       formData.append("description", description);
       formData.append("condition", condition);
-      formData.append("size", size);
+      formData.append("sizes", JSON.stringify(sizes)); // DIKIRIM SEBAGAI STRING JSON
       formData.append("status", status);
       formData.append("badge", badge);
 
       // KIRIM INFORMASI FOTO YANG TERSISA
-      // Kita kirim sebagai string JSON agar backend tahu foto mana saja yang jangan dihapus
       formData.append("retainedPhotos", JSON.stringify(existingPhotos));
 
       // KIRIM FOTO BARU (jika ada)
@@ -256,7 +300,7 @@ export default function ModalEditProduk({
               </div>
             </div>
 
-            {/* BAGIAN FORM (Sama seperti sebelumnya) */}
+            {/* BAGIAN FORM */}
             <div className="md:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="md:col-span-2">
                 <label className="block text-sm text-gray-400 mb-2">
@@ -299,7 +343,110 @@ export default function ModalEditProduk({
                 />
               </div>
 
-              {/* ... Field lainnya (Size, Condition, Status, Badge, Description) tetap sama ... */}
+              {/* AREA INPUT UKURAN & STOK DINAMIS */}
+              <div className="md:col-span-2 bg-[#121212] p-4 rounded-xl border border-gray-800 space-y-4 mt-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm text-gray-400 font-medium">
+                    Varian Ukuran & Stok <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAddSize}
+                    className="flex items-center text-xs bg-[#B88E2F]/20 text-[#B88E2F] hover:bg-[#B88E2F]/30 px-3 py-1.5 rounded-lg transition-colors font-bold"
+                  >
+                    <Plus size={14} className="mr-1" /> Tambah Ukuran
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {sizes.map((item, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          placeholder="Size (Cth: 41 atau M)"
+                          value={item.size}
+                          onChange={(e) =>
+                            handleSizeChange(index, "size", e.target.value)
+                          }
+                          className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#B88E2F] text-sm"
+                          required
+                        />
+                      </div>
+                      <div className="w-1/3">
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="Stok"
+                          value={
+                            item.stock === 0 && item.size === ""
+                              ? ""
+                              : item.stock
+                          }
+                          onChange={(e) =>
+                            handleSizeChange(index, "stock", e.target.value)
+                          }
+                          className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#B88E2F] text-sm"
+                          required
+                        />
+                      </div>
+
+                      <div className="pt-1">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSize(index)}
+                          disabled={sizes.length === 1}
+                          className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 transition-colors"
+                          title="Hapus Ukuran"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2 mt-2">
+                  Kondisi
+                </label>
+                <select
+                  value={condition}
+                  onChange={(e) => setCondition(e.target.value)}
+                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
+                >
+                  <option value="New">New (Baru)</option>
+                  <option value="Second">Second (Bekas)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2 mt-2">
+                  Status
+                </label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
+                >
+                  <option value="READY">READY</option>
+                  <option value="SOLD">SOLD</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-400 mb-2">
+                  Badge (Label Promo)
+                </label>
+                <input
+                  type="text"
+                  value={badge}
+                  onChange={(e) => setBadge(e.target.value)}
+                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
+                />
+              </div>
+
               <div className="md:col-span-2">
                 <label className="block text-sm text-gray-400 mb-2">
                   Deskripsi

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { X, Upload, Trash2 } from "lucide-react";
+import { X, Upload, Plus, Trash2 } from "lucide-react"; // Pastikan import Plus dan Trash2
 import axiosInstance from "@/lib/axios";
 
 interface ModalAddProdukProps {
@@ -21,7 +21,8 @@ export default function ModalAddProduk({
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [condition, setCondition] = useState("New");
-  const [size, setSize] = useState("");
+  // State sizes dipertahankan sebagai array of objects
+  const [sizes, setSizes] = useState([{ size: "", stock: 0 }]);
   const [status, setStatus] = useState("READY");
   const [badge, setBadge] = useState("");
 
@@ -47,7 +48,30 @@ export default function ModalAddProduk({
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  // --- FUNGSI HANDLER UNTUK UKURAN & STOK DINAMIS ---
+  const handleAddSize = () => {
+    setSizes([...sizes, { size: "", stock: 0 }]);
+  };
+
+  const handleRemoveSize = (indexToRemove: number) => {
+    if (sizes.length === 1) return; // Minimal harus ada 1 ukuran
+    setSizes(sizes.filter((_, index) => index !== indexToRemove));
+  };
+
+  const handleSizeChange = (
+    index: number,
+    field: "size" | "stock",
+    value: string,
+  ) => {
+    const newSizes = [...sizes];
+    if (field === "stock") {
+      newSizes[index][field] = parseInt(value, 10) || 0; // Pastikan jadi angka
+    } else {
+      newSizes[index][field] = value;
+    }
+    setSizes(newSizes);
+  };
+  // ---------------------------------------------------
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -77,6 +101,13 @@ export default function ModalAddProduk({
       return;
     }
 
+    // Validasi tambahan: Pastikan size tidak kosong
+    const hasEmptySize = sizes.some((s) => s.size.trim() === "");
+    if (hasEmptySize) {
+      alert("Mohon isi semua nama varian ukuran (Size) yang ditambahkan.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -87,7 +118,7 @@ export default function ModalAddProduk({
       formData.append("price", price);
       formData.append("description", description);
       formData.append("condition", condition);
-      formData.append("size", size);
+      formData.append("sizes", JSON.stringify(sizes)); // Dikirim sebagai string JSON
       formData.append("status", status);
       formData.append("badge", badge);
 
@@ -114,13 +145,15 @@ export default function ModalAddProduk({
     setPrice("");
     setDescription("");
     setCondition("New");
-    setSize("");
+    setSizes([{ size: "", stock: 0 }]);
     setStatus("READY");
     setBadge("");
     setPhotos([]);
     setPreviewUrls([]);
     onClose();
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
@@ -245,21 +278,72 @@ export default function ModalAddProduk({
                 />
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">
-                  Ukuran (Size)
-                </label>
-                <input
-                  type="text"
-                  value={size}
-                  onChange={(e) => setSize(e.target.value)}
-                  placeholder="Contoh: 40, 41, 42"
-                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
-                />
+              {/* AREA INPUT UKURAN & STOK DINAMIS (Mengambil 2 kolom penuh) */}
+              <div className="md:col-span-2 bg-[#121212] p-4 rounded-xl border border-gray-800 space-y-4 mt-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm text-gray-400 font-medium">
+                    Varian Ukuran & Stok <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAddSize}
+                    className="flex items-center text-xs bg-[#B88E2F]/20 text-[#B88E2F] hover:bg-[#B88E2F]/30 px-3 py-1.5 rounded-lg transition-colors font-bold"
+                  >
+                    <Plus size={14} className="mr-1" /> Tambah Ukuran
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {sizes.map((item, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          placeholder="Size (Cth: 41 atau M)"
+                          value={item.size}
+                          onChange={(e) =>
+                            handleSizeChange(index, "size", e.target.value)
+                          }
+                          className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#B88E2F] text-sm"
+                          required
+                        />
+                      </div>
+                      <div className="w-1/3">
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="Stok"
+                          value={
+                            item.stock === 0 && item.size === ""
+                              ? ""
+                              : item.stock
+                          }
+                          onChange={(e) =>
+                            handleSizeChange(index, "stock", e.target.value)
+                          }
+                          className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#B88E2F] text-sm"
+                          required
+                        />
+                      </div>
+
+                      <div className="pt-1">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSize(index)}
+                          disabled={sizes.length === 1}
+                          className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500 transition-colors"
+                          title="Hapus Ukuran"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-2">
+                <label className="block text-sm text-gray-400 mb-2 mt-2">
                   Kondisi
                 </label>
                 <select
@@ -273,7 +357,7 @@ export default function ModalAddProduk({
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-2">
+                <label className="block text-sm text-gray-400 mb-2 mt-2">
                   Status
                 </label>
                 <select
@@ -286,7 +370,7 @@ export default function ModalAddProduk({
                 </select>
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm text-gray-400 mb-2">
                   Badge (Label Promo)
                 </label>

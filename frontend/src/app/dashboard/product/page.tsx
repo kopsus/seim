@@ -84,6 +84,8 @@ export default function ManajemenProdukPage() {
     setIsDeleteModalOpen(true);
   };
 
+  console.log("data products", products);
+
   return (
     <div className="w-full relative">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -224,7 +226,9 @@ export default function ManajemenProdukPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-white">{product.size}</td>
+                    <td className="px-6 py-4 text-white">
+                      {product.sizes?.map((s: any) => s.size).join(", ")}
+                    </td>
 
                     <td className="px-6 py-4 text-white font-medium">
                       {formatRupiah(Number(product.harga))}

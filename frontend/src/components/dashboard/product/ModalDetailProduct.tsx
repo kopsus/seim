@@ -129,7 +129,9 @@ export default function ModalDetailProduk({
                 <p className="text-xs text-gray-500 mb-1 flex items-center gap-1.5">
                   <Package size={14} /> Ukuran (Size)
                 </p>
-                <p className="text-white font-medium">{product.size || "-"}</p>
+                <p className="text-white font-medium">
+                  {product.sizes?.map((s: any) => s.size).join(", ") || "-"}
+                </p>
               </div>
               <div className="bg-[#0A0A0A] p-4 rounded-xl border border-gray-800 md:col-span-2 flex justify-between items-center">
                 <div>
