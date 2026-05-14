@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import axiosInstance from "@/lib/axios";
 import { getImageUrl } from "@/utils/getImageUrl";
-import AnnouncementModal from "@/components/dashboard/AnnouncementModal";
 
 export default function HomePage() {
   const [products, setProducts] = useState<any[]>([]);

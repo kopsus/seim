@@ -70,23 +70,35 @@ model Kategori {
 
 // 3. Tabel Products (Katalog Sepatu)
 model Product {
-  id          Int          @id @default(autoincrement())
+  id          String       @id @default(uuid())
   kategori_id Int          
   nama_produk String
   deskripsi   String       @db.Text
   kondisi     String
-  size        String
   harga       Decimal      @db.Decimal(10, 2)
   status      StatusProduk @default(READY)
   badge       String?      
   foto        Json         
   
+  sizes       ProductSize[]
+
   // Relasi ke Tabel Kategori
   kategori    Kategori     @relation(fields: [kategori_id], references: [id])
   order_items OrderItem[]
 
   created_at  DateTime     @default(now())
   updated_at  DateTime     @updatedAt
+}
+
+model ProductSize {
+  id          Int      @id @default(autoincrement())
+  product_id  String   
+  size        String   // Teks bebas (misal: "42", "42.5", "S")
+  stock       Int      @default(0) // Jumlah stok per ukuran
+
+  product     Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([product_id]) 
 }
 
 // 4. Tabel Orders (Transaksi Utama)
@@ -112,7 +124,7 @@ model Order {
 model OrderItem {
   id             Int     @id @default(autoincrement())
   order_id       String
-  product_id     Int
+  product_id     String
   harga_saat_beli Decimal @db.Decimal(10, 2)
 
   // Relasi

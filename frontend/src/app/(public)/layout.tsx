@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import AnnouncementModal from "@/components/dashboard/AnnouncementModal";
 
 export default function PublicLayout({
   children,
@@ -17,6 +18,8 @@ export default function PublicLayout({
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
       />
+
+      <AnnouncementModal />
 
       <main className="flex-1 w-full md:ml-64 relative flex flex-col min-h-screen transition-all duration-300">
         <Header onOpenMenu={() => setIsMobileMenuOpen(true)} />

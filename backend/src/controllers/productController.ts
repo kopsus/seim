@@ -38,7 +38,7 @@ export const getProducts = async (
         where: whereClause,
         skip: skip,
         take: limit,
-        include: { kategori: true },
+        include: { kategori: true, sizes: true },
         orderBy: { created_at: "desc" },
       }),
       prisma.product.count({ where: whereClause }),
@@ -64,10 +64,10 @@ export const getProductById = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const productId = parseInt(req.params.id as string, 10);
+    const productId = req.params.id as string;
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      include: { kategori: true },
+      include: { kategori: true, sizes: true },
     });
 
     if (!product) {
@@ -89,9 +89,28 @@ export const createProduct = async (
   try {
     const categoryId = parseInt(req.body.categoryId as string, 10);
     const price = parseFloat(req.body.price as string);
-    const { name, description, condition, size, status, badge } = req.body;
+    const { name, description, condition, status, badge } = req.body;
 
     const files = req.files as Express.Multer.File[];
+    const sizesString = req.body.sizes as string;
+    let parsedSizes: { size: string; stock: number }[] = [];
+
+    if (sizesString) {
+      try {
+        parsedSizes = JSON.parse(sizesString);
+      } catch (error) {
+        if (files && files.length > 0) {
+          files.forEach((file) => {
+            if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+          });
+        }
+        res.status(400).json({
+          message:
+            "Format ukuran (sizes) tidak valid. Harus berupa JSON string.",
+        });
+        return;
+      }
+    }
 
     const existingProduct = await prisma.product.findFirst({
       where: { nama_produk: name },
@@ -128,10 +147,19 @@ export const createProduct = async (
         deskripsi: description,
         harga: price,
         kondisi: condition,
-        size: size,
         status: status || "READY",
         badge: badge,
         foto: photoPaths,
+
+        sizes: {
+          create: parsedSizes.map((item) => ({
+            size: item.size,
+            stock: parseInt(String(item.stock), 10),
+          })),
+        },
+      },
+      include: {
+        sizes: true,
       },
     });
 
@@ -150,7 +178,7 @@ export const updateProduct = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const productId = parseInt(req.params.id as string, 10);
+    const productId = req.params.id as string;
 
     const existingProduct = await prisma.product.findUnique({
       where: { id: productId },
@@ -167,11 +195,33 @@ export const updateProduct = async (
     const price = req.body.price
       ? parseFloat(req.body.price as string)
       : undefined;
-    const { name, description, condition, size, status, badge } = req.body;
+
+    const { name, description, condition, status, badge } = req.body;
+
+    const files = req.files as Express.Multer.File[];
+
+    const sizesString = req.body.sizes as string;
+    let parsedSizes: { size: string; stock: number }[] | undefined = undefined;
+
+    if (sizesString) {
+      try {
+        parsedSizes = JSON.parse(sizesString);
+      } catch (error) {
+        if (files && files.length > 0) {
+          files.forEach((file) => {
+            if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+          });
+        }
+        res.status(400).json({
+          message:
+            "Format ukuran (sizes) tidak valid. Harus berupa JSON string.",
+        });
+        return;
+      }
+    }
 
     let finalPhotoPaths = existingProduct.foto as string[];
     const originalPhotos = existingProduct.foto as string[];
-    const files = req.files as Express.Multer.File[];
 
     if (req.body.retainedPhotos !== undefined || (files && files.length > 0)) {
       let retained: string[] = [];
@@ -213,11 +263,23 @@ export const updateProduct = async (
         nama_produk: name || existingProduct.nama_produk,
         deskripsi: description || existingProduct.deskripsi,
         kondisi: condition || existingProduct.kondisi,
-        size: size || existingProduct.size,
         harga: price || existingProduct.harga,
         status: status || existingProduct.status,
         badge: badge || existingProduct.badge,
         foto: finalPhotoPaths,
+
+        ...(parsedSizes !== undefined && {
+          sizes: {
+            deleteMany: {},
+            create: parsedSizes.map((item) => ({
+              size: item.size,
+              stock: parseInt(String(item.stock), 10),
+            })),
+          },
+        }),
+      },
+      include: {
+        sizes: true,
       },
     });
 
@@ -237,7 +299,7 @@ export const deleteProduct = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const productId = parseInt(req.params.id as string, 10);
+    const productId = req.params.id as string;
 
     const product = await prisma.product.findUnique({
       where: { id: productId },
