@@ -9,17 +9,17 @@ export default function TentangKamiPage() {
         </h1>
         <div className="bg-[#1A1A1A] p-8 rounded-3xl border border-gray-800 text-gray-300 leading-relaxed space-y-4 text-sm md:text-base">
           <p>
-            <strong className="text-white">SEIM (Second Import)</strong> lahir
-            dari kecintaan kami terhadap kultur *sneakers* dan keinginan untuk
-            memberikan akses sepatu berkualitas tinggi dengan harga yang jauh
-            lebih terjangkau bagi semua kalangan.
+            <strong className="text-white">SEIM (Second Item Mulus)</strong>{" "}
+            lahir dari kecintaan kami terhadap kultur *sneakers* dan keinginan
+            untuk memberikan akses sepatu berkualitas tinggi dengan harga yang
+            jauh lebih terjangkau bagi semua kalangan.
           </p>
           <p>
             Kami menyadari bahwa memiliki sepatu *branded* original seringkali
             membutuhkan biaya yang besar. Oleh karena itu, SEIM hadir sebagai
-            solusi cerdas. Kami menyeleksi ketat setiap pasang sepatu *second
-            import* dari luar negeri, memastikan keaslian (100% Original), dan
-            membersihkannya secara profesional hingga mencapai kondisi *Like
+            solusi cerdas. Kami menyeleksi ketat setiap pasang sepatu *Second
+            Item Mulus* dari luar negeri, memastikan keaslian (100% Original),
+            dan membersihkannya secara profesional hingga mencapai kondisi *Like
             New* (seperti baru).
           </p>
           <p>

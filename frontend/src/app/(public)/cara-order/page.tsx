@@ -54,8 +54,8 @@ export default function CaraOrderPage() {
           Cara Melakukan Order
         </h1>
         <p className="text-gray-400 text-sm md:text-base">
-          Belanja sepatu *second import* berkualitas di SEIM sangatlah mudah dan
-          aman. <br className="hidden md:block" />
+          Belanja sepatu *Second Item Mulus* berkualitas di SEIM sangatlah mudah
+          dan aman. <br className="hidden md:block" />
           Ikuti panduan sederhana di bawah ini.
         </p>
       </div>

@@ -23,11 +23,9 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // 1. Ambil Data Produk dari Backend
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // Anda bisa menambahkan parameter ?status=READY jika hanya ingin menampilkan barang yang belum terjual
         const response = await axiosInstance.get("/products");
         setProducts(response.data.data);
       } catch (error) {
@@ -40,12 +38,10 @@ export default function HomePage() {
     fetchProducts();
   }, []);
 
-  // 2. Ubah Data Produk Asli menjadi Format Flipbook
+  // HARUS DI ATAS useEffect autoplay
   const flipbookPages = products.map((product, index) => {
-    // Foto Kiri: Foto Index ke-0
     const leftImage = getImageUrl(product.foto ? [product.foto[0]] : []);
 
-    // Foto Kanan: Foto Index ke-1 (jika ada). Jika tidak ada, pakai foto pertama lagi.
     const rightImage = getImageUrl(
       product.foto && product.foto.length > 1
         ? [product.foto[1]]
@@ -55,7 +51,6 @@ export default function HomePage() {
     return {
       id: product.id,
       left: {
-        // Tampilkan nama produk, jika terlalu panjang potong agar desain flipbook tidak berantakan
         title:
           product.nama_produk.length > 15
             ? product.nama_produk.substring(0, 15) + ".."
@@ -72,19 +67,31 @@ export default function HomePage() {
     };
   });
 
+  // AUTO SLIDER
+  useEffect(() => {
+    if (flipbookPages.length === 0) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) =>
+        prev === flipbookPages.length - 1 ? 0 : prev + 1,
+      );
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [flipbookPages.length]);
+
   const nextSlide = () => {
-    if (currentIndex < flipbookPages.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    }
+    setCurrentIndex((prev) =>
+      prev === flipbookPages.length - 1 ? 0 : prev + 1,
+    );
   };
 
   const prevSlide = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
-    }
+    setCurrentIndex((prev) =>
+      prev === 0 ? flipbookPages.length - 1 : prev - 1,
+    );
   };
 
-  // Tampilan Loading
   if (isLoading) {
     return (
       <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center min-h-[70vh]">
@@ -96,7 +103,6 @@ export default function HomePage() {
     );
   }
 
-  // Tampilan Jika Belum Ada Produk
   if (flipbookPages.length === 0) {
     return (
       <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center min-h-[70vh]">
@@ -111,7 +117,6 @@ export default function HomePage() {
 
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col min-h-full px-4 md:px-0">
-      {/* Header Majalah */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-8 gap-4">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-white uppercase tracking-widest leading-tight">
@@ -159,7 +164,6 @@ export default function HomePage() {
         </button>
 
         <div className="w-full bg-[#EBE7DF] rounded-sm shadow-2xl flex flex-col md:flex-row overflow-hidden relative border border-[#D1CCC0] min-h-100 md:min-h-125">
-          {/* HALAMAN KIRI */}
           <div className="w-full md:w-1/2 p-8 md:p-12 relative flex flex-col border-b md:border-b-0 md:border-r border-[#D1CCC0] shadow-[inset_-15px_0_15px_-15px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-left-4 duration-500">
             <h1 className="text-4xl md:text-5xl font-black text-[#1A1A1A] tracking-tighter mb-1 uppercase">
               {currentSpread.left.title}
@@ -168,7 +172,6 @@ export default function HomePage() {
               {currentSpread.left.subtitle}
             </h2>
 
-            {/* Hanya tampilkan badge jika data tidak kosong */}
             {currentSpread.left.badge && (
               <span className="inline-block bg-[#B88E2F] text-white text-xs font-bold px-3 py-1 rounded-sm w-max mb-8 shadow-md uppercase">
                 {currentSpread.left.badge}
@@ -191,7 +194,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* HALAMAN KANAN */}
           <div className="w-full md:w-1/2 p-8 md:p-12 relative flex flex-col shadow-[inset_15px_0_15px_-15px_rgba(0,0,0,0.1)] animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="relative w-full flex-1 min-h-62.5">
               <Image
@@ -230,7 +232,7 @@ export default function HomePage() {
           </div>
           <div>
             <p className="text-sm font-bold text-white uppercase">
-              Second Import
+              Second Item Mulus
             </p>
             <p className="text-xs text-gray-500">100% Original</p>
           </div>

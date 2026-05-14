@@ -73,7 +73,7 @@ export default function Sidebar({
           <div>
             <h1 className="text-3xl font-bold italic tracking-wider">SEIM</h1>
             <p className="text-xs text-gray-400 mt-1 uppercase">
-              Second Import
+              Second Item Mulus
             </p>
           </div>
           <button
