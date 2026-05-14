@@ -11,6 +11,7 @@ import {
   Users,
   LogOut,
   X,
+  Megaphone,
 } from "lucide-react";
 import Cookies from "js-cookie";
 
@@ -131,6 +132,14 @@ export default function DashboardSidebar({
               >
                 <Layers size={18} />
                 <span className="text-sm">Kategori</span>
+              </Link>
+              <Link
+                href="/dashboard/announcement"
+                onClick={onClose}
+                className={getMenuClass("/dashboard/announcement")}
+              >
+                <Megaphone size={18} />
+                <span className="text-sm">Pengumuman</span>
               </Link>
             </>
           )}

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import axiosInstance from "@/lib/axios";
 import { getImageUrl } from "@/utils/getImageUrl";
+import AnnouncementModal from "@/components/dashboard/AnnouncementModal";
 
 export default function HomePage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -116,7 +117,7 @@ export default function HomePage() {
   const currentSpread = flipbookPages[currentIndex];
 
   return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col min-h-full px-4 md:px-0">
+    <div className="relative w-full max-w-6xl mx-auto flex flex-col min-h-full px-4 md:px-0">
       <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-8 gap-4">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-white uppercase tracking-widest leading-tight">
