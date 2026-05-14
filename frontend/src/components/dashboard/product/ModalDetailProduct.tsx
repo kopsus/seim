@@ -126,12 +126,27 @@ export default function ModalDetailProduk({
                 </p>
               </div>
               <div className="bg-[#0A0A0A] p-4 rounded-xl border border-gray-800">
-                <p className="text-xs text-gray-500 mb-1 flex items-center gap-1.5">
-                  <Package size={14} /> Ukuran (Size)
+                <p className="text-xs text-gray-500 mb-2 flex items-center gap-1.5">
+                  <Package size={14} /> Ukuran & Stok
                 </p>
-                <p className="text-white font-medium">
-                  {product.sizes?.map((s: any) => s.size).join(", ") || "-"}
-                </p>
+                <div className="flex flex-wrap gap-2">
+                  {product.sizes && product.sizes.length > 0 ? (
+                    product.sizes.map((s: any) => (
+                      <span
+                        key={s.id}
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium border ${
+                          s.stock > 0
+                            ? "bg-gray-800 border-gray-700 text-gray-200"
+                            : "bg-red-500/10 border-red-500/20 text-red-500"
+                        }`}
+                      >
+                        {s.size} (Stok: {s.stock})
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-white font-medium">-</span>
+                  )}
+                </div>
               </div>
               <div className="bg-[#0A0A0A] p-4 rounded-xl border border-gray-800 md:col-span-2 flex justify-between items-center">
                 <div>

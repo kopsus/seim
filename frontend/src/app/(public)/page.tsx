@@ -128,14 +128,14 @@ export default function HomePage() {
         </div>
 
         <div className="hidden md:flex items-center space-x-6 text-gray-400">
-          <div className="flex items-center bg-[#1A1A1A] px-4 py-2 rounded-lg border border-gray-800 text-sm">
+          {/* <div className="flex items-center bg-[#1A1A1A] px-4 py-2 rounded-lg border border-gray-800 text-sm">
             <span className="mr-3">Katalog Terbaru</span>
             <Calendar size={16} />
-          </div>
+          </div> */}
           <span className="text-sm font-medium">
             {currentIndex + 1} / {flipbookPages.length}
           </span>
-          <div className="flex items-center space-x-3">
+          {/* <div className="flex items-center space-x-3">
             <button className="hover:text-white transition-colors">
               <Search size={18} />
             </button>
@@ -145,7 +145,7 @@ export default function HomePage() {
             <button className="hover:text-white transition-colors">
               <Maximize size={18} />
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
 

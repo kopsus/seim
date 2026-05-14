@@ -1,12 +1,12 @@
 import { Category } from "./category";
 
 export type Product = {
-  id: number;
+  id: string;
   kategori_id: number;
   nama_produk: string;
   deskripsi: string;
   kondisi: string;
-  size: string;
+  sizes: string[];
   harga: string;
   status: string;
   badge?: "NEW" | "SOLD OUT" | null;

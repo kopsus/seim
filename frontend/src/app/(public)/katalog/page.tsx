@@ -148,7 +148,7 @@ export default function KatalogPage() {
               id={product.id}
               name={product.nama_produk}
               price={Number(product.harga)}
-              size={Number(product.size)}
+              sizes={product.sizes || []}
               condition={product.kondisi}
               imageUrl={getImageUrl(product.foto)}
               badge={product.status === "SOLD" ? "SOLD OUT" : product.badge}

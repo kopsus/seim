@@ -49,10 +49,10 @@ export default function Header({ onOpenMenu }: HeaderProps) {
         </div>
 
         <div className="flex items-center space-x-4 md:space-x-6 ml-4">
-          <button className="text-gray-400 hover:text-white transition-colors relative hidden sm:block">
+          {/* <button className="text-gray-400 hover:text-white transition-colors relative hidden sm:block">
             <Bell size={22} />
             <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-[#0A0A0A]"></span>
-          </button>
+          </button> */}
 
           <button
             onClick={() => setIsCartOpen(true)}

@@ -227,7 +227,20 @@ export default function ManajemenProdukPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-white">
-                      {product.sizes?.map((s: any) => s.size).join(", ")}
+                      <div className="flex flex-wrap gap-1.5">
+                        {product.sizes?.map((s: any) => (
+                          <span
+                            key={s.id}
+                            className={`px-2 py-0.5 rounded text-xs font-medium border ${
+                              s.stock > 0
+                                ? "bg-gray-800 border-gray-700 text-gray-200"
+                                : "bg-red-500/10 border-red-500/20 text-red-500"
+                            }`}
+                          >
+                            {s.size} ({s.stock})
+                          </span>
+                        ))}
+                      </div>
                     </td>
 
                     <td className="px-6 py-4 text-white font-medium">

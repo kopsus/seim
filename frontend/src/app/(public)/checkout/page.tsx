@@ -102,7 +102,24 @@ export default function CheckoutPage() {
       let currentOrderId = pendingOrderId;
 
       if (!currentOrderId) {
-        const productIds = items.map((item) => Number(item.id));
+        // --- INI ADALAH BAGIAN YANG BERUBAH (PAYLOAD API) ---
+        // Mengubah format pengiriman data keranjang ke backend agar sesuai dengan skema Zod baru
+        const orderItemsData = items.map((item) => ({
+          productId: String(item.id),
+          size: String(item.size),
+        }));
+
+        // Validasi ekstra (berjaga-jaga jika keranjang punya barang yang tidak ada ukurannya)
+        const hasMissingSize = orderItemsData.some(
+          (item) => !item.size || item.size === "undefined",
+        );
+        if (hasMissingSize) {
+          alert(
+            "Terjadi kesalahan pada data keranjang Anda (Ukuran tidak valid). Mohon hapus dan masukkan kembali barang ke keranjang.",
+          );
+          setIsSubmitting(false);
+          return;
+        }
 
         const checkoutData = {
           customerName: name,
@@ -110,8 +127,9 @@ export default function CheckoutPage() {
           customerAddress: address,
           paymentMethod: paymentMethod,
           codDate: paymentMethod === "COD" ? codDate : undefined,
-          productIds: productIds,
+          items: orderItemsData, // Mengirim properti 'items', bukan lagi 'productIds'
         };
+        // -----------------------------------------------------
 
         const responseCheckout = await axiosInstance.post(
           "/orders/checkout",
@@ -207,7 +225,6 @@ export default function CheckoutPage() {
               Data Pengiriman
             </h2>
             <div className="space-y-4">
-              {/* BARU: Tampilkan pesan error di bawah input jika ada */}
               <div>
                 <input
                   type="text"
@@ -367,31 +384,44 @@ export default function CheckoutPage() {
           <div className="bg-[#1A1A1A] p-6 rounded-2xl border border-gray-800 sticky top-28">
             <h2 className="text-xl font-bold text-white mb-6">Ringkasan</h2>
             {/* Tampilkan pesan jika ada error umum yang tidak menempel di input field tertentu */}
-            {validationErrors["productIds.0"] && (
+            {validationErrors["items"] && (
               <div className="bg-red-500/10 border border-red-500 text-red-500 text-xs p-3 rounded-xl mb-4">
-                Ada masalah dengan produk di keranjang Anda. Mohon muat ulang
-                halaman.
+                Ada masalah dengan produk di keranjang Anda. Mohon periksa
+                kembali.
               </div>
             )}
 
             <div className="space-y-4 mb-6">
-              {items.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <span className="text-gray-400">
-                    {item.name} (x{item.quantity})
-                  </span>
-                  <span className="text-white">
+              {/* --- INI ADALAH BAGIAN YANG BERUBAH (RINGKASAN UI) --- */}
+              {items.map((item, index) => (
+                <div
+                  key={`${item.id}-${index}`}
+                  className="flex justify-between text-sm items-start gap-4"
+                >
+                  <div className="flex flex-col">
+                    <span className="text-gray-300 font-medium leading-tight">
+                      {item.name}
+                    </span>
+                    <span className="text-xs text-gray-500 mt-1">
+                      Size: {item.size} <span className="mx-1">•</span> Qty:{" "}
+                      {item.quantity}
+                    </span>
+                  </div>
+                  <span className="text-white font-medium shrink-0">
                     {formatRupiah(item.price * item.quantity)}
                   </span>
                 </div>
               ))}
-              <div className="border-t border-gray-800 pt-4 flex justify-between">
-                <span className="text-gray-300 font-bold">Total</span>
+              {/* ----------------------------------------------------- */}
+
+              <div className="border-t border-gray-800 pt-4 flex justify-between items-center">
+                <span className="text-gray-300 font-bold">Total Belanja</span>
                 <span className="text-xl font-bold text-[#B88E2F]">
                   {formatRupiah(totalHarga)}
                 </span>
               </div>
             </div>
+
             <button
               disabled={isSubmitting}
               onClick={handleBuatPesanan}
@@ -400,7 +430,7 @@ export default function CheckoutPage() {
               {isSubmitting ? (
                 <Loader2 className="animate-spin" />
               ) : (
-                "Buat Pesanan"
+                "Buat Pesanan Sekarang"
               )}
             </button>
           </div>

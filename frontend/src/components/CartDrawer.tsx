@@ -58,8 +58,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {items.map((item, index) => (
-              <div key={`${item.id}-${index}`} className="flex space-x-4">
+            {items.map((item) => (
+              // Mengubah key agar unik berdasarkan kombinasi ID dan Ukuran
+              <div key={`${item.id}-${item.size}`} className="flex space-x-4">
                 <div className="relative w-20 h-20 bg-gray-900 rounded-lg overflow-hidden border border-gray-800 shrink-0">
                   <Image
                     src={item.imageUrl}
@@ -81,7 +82,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center bg-[#1A1A1A] border border-gray-800 rounded-lg">
                       <button
-                        onClick={() => decreaseQuantity(item.id)}
+                        // UBAH DI SINI: Tambah item.size
+                        onClick={() => decreaseQuantity(item.id, item.size)}
                         className="p-1.5 text-gray-400 hover:text-white transition-colors"
                       >
                         <Minus size={14} />
@@ -90,14 +92,16 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => increaseQuantity(item.id)}
+                        // UBAH DI SINI: Tambah item.size
+                        onClick={() => increaseQuantity(item.id, item.size)}
                         className="p-1.5 text-gray-400 hover:text-white transition-colors"
                       >
                         <Plus size={14} />
                       </button>
                     </div>
                     <button
-                      onClick={() => removeItem(item.id)}
+                      // UBAH DI SINI: Tambah item.size
+                      onClick={() => removeItem(item.id, item.size)}
                       className="text-gray-500 hover:text-red-500 transition-colors"
                     >
                       <Trash2 size={16} />
@@ -109,7 +113,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           </div>
         )}
 
-        {/* Bagian Checkout (Hanya muncul jika ada barang) */}
+        {/* Bagian Checkout */}
         {items.length > 0 && (
           <div className="p-6 border-t border-gray-800 bg-[#121212]">
             <div className="flex items-center justify-between mb-6">

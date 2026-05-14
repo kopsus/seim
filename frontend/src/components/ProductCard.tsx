@@ -1,46 +1,37 @@
 "use client";
 
-import { CheckCircle, ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-import { useCartStore } from "@/store/useCartStore";
 import { formatRupiah } from "@/utils/formatRupiah";
 
 interface ProductCardProps {
-  id: number;
+  id: string; // Diubah jadi string menyesuaikan UUID Prisma
   name: string;
   price: number;
-  size: number;
+  sizes: any[]; // Menerima array ukuran dari backend
   condition: string;
   imageUrl: string;
-  badge?: "NEW" | "SOLD OUT" | null;
+  badge?: string | null; // Diperluas agar bisa menerima text badge apa saja
 }
 
 export default function ProductCard({
   id,
   name,
   price,
-  size,
+  sizes,
   condition,
   imageUrl,
   badge,
 }: ProductCardProps) {
-  const { addItem } = useCartStore();
-  const [isAdded, setIsAdded] = useState(false);
-
-  const handleAddToCart = () => {
-    addItem({
-      id: id,
-      name: name,
-      price: price,
-      size: size,
-      imageUrl: imageUrl,
-    });
-
-    setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 1500);
-  };
+  // Menggabungkan semua ukuran yang stoknya lebih dari 0 untuk ditampilkan
+  const availableSizes =
+    sizes && sizes.length > 0
+      ? sizes
+          .filter((s) => s.stock > 0)
+          .map((s) => s.size)
+          .join(", ")
+      : "Habis";
 
   return (
     <div className="bg-[#1A1A1A] rounded-xl overflow-hidden border border-gray-800 hover:border-[#B88E2F] transition-all group flex flex-col">
@@ -53,19 +44,14 @@ export default function ProductCard({
             className={`absolute top-2 left-2 md:top-4 md:left-4 text-[8px] md:text-[10px] font-bold px-2 py-1 rounded z-10 ${
               badge === "NEW"
                 ? "bg-[#B88E2F] text-white"
-                : "bg-gray-600 text-white"
+                : badge === "SOLD OUT"
+                  ? "bg-red-600 text-white"
+                  : "bg-gray-600 text-white"
             }`}
           >
             {badge}
           </span>
         )}
-
-        {/* <button
-          onClick={(e) => e.preventDefault()}
-          className="absolute top-2 right-2 md:top-4 md:right-4 text-gray-400 hover:text-red-500 transition-colors z-10"
-        >
-          <Heart size={18} className="md:w-5 md:h-5" />
-        </button> */}
 
         <div className="relative w-full h-full">
           <Image
@@ -88,8 +74,11 @@ export default function ProductCard({
             {name}
           </h3>
         </Link>
-        <p className="text-xs md:text-sm text-gray-400 mb-3 md:mb-4">
-          Size {size} | {condition}
+
+        {/* Menampilkan deretan ukuran */}
+        <p className="text-xs md:text-sm text-gray-400 mb-3 md:mb-4 truncate">
+          Size: <span className="text-gray-300">{availableSizes || "-"}</span> |{" "}
+          {condition}
         </p>
 
         <div className="flex items-center justify-between mt-auto pt-2">
@@ -97,19 +86,15 @@ export default function ProductCard({
             {formatRupiah(price)}
           </span>
 
-          {/* Tombol Keranjang yang sudah disambungkan ke fungsi handleAddToCart */}
-          <button
-            onClick={handleAddToCart}
-            className={`${
-              isAdded ? "bg-green-600" : "bg-gray-800 hover:bg-[#B88E2F]"
-            } text-white p-1.5 md:p-2.5 rounded-lg transition-colors shrink-0`}
-          >
-            {isAdded ? (
-              <CheckCircle size={16} className="md:w-4.5 md:h-4.5" />
-            ) : (
+          {/* Tombol Keranjang diarahkan ke Detail Produk agar user pilih size dulu */}
+          <Link href={`/produk/${id}`}>
+            <button
+              className="bg-gray-800 hover:bg-[#B88E2F] text-white p-1.5 md:p-2.5 rounded-lg transition-colors shrink-0"
+              title="Pilih Ukuran"
+            >
               <ShoppingCart size={16} className="md:w-4.5 md:h-4.5" />
-            )}
-          </button>
+            </button>
+          </Link>
         </div>
       </div>
     </div>

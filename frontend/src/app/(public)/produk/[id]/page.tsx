@@ -31,6 +31,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [product, setProduct] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // --- STATE UNTUK UKURAN YANG DIPILIH ---
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
   // Ambil detail produk dari backend
   useEffect(() => {
     const fetchProductDetail = async () => {
@@ -49,13 +52,14 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
   // Handler Tambah ke Keranjang
   const handleAddToCart = () => {
-    if (!product) return;
+    if (!product || !selectedSize) return;
 
     addItem({
       id: product.id,
       name: product.nama_produk,
       price: Number(product.harga),
-      size: Number(product.size),
+      // CATATAN: size sekarang dikirim sebagai string yang dipilih!
+      size: selectedSize,
       imageUrl: getImageUrl(product.foto),
     });
 
@@ -110,8 +114,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const categoryName = product.kategori?.nama_kategori || "Sneakers";
   const processedImageUrl = getImageUrl(product.foto);
 
+  // Teks WA sekarang dinamis menyesuaikan ukuran yang diklik
+  const waSizeText = selectedSize ? `(Size ${selectedSize})` : "";
   const waText = encodeURIComponent(
-    `Halo SEIM, saya tertarik dengan sepatu ${product.nama_produk} (Size ${product.size}) seharga ${formatRupiah(Number(product.harga))}. Apakah stoknya masih ada?`,
+    `Halo SEIM, saya tertarik dengan sepatu ${product.nama_produk} ${waSizeText} seharga ${formatRupiah(Number(product.harga))}. Apakah stoknya masih ada?`,
   );
 
   return (
@@ -137,12 +143,14 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         <div className="md:w-1/2 bg-[#0A0A0A] flex flex-col items-center justify-center relative min-h-75 md:min-h-125">
           {displayBadge && (
             <span
-              className={`absolute z-10 top-6 left-6 text-white text-xs font-bold px-3 py-1 rounded shadow-md ${isSoldOut ? "bg-red-600" : "bg-[#B88E2F]"}`}
+              className={`absolute z-10 top-6 left-6 text-white text-xs font-bold px-3 py-1 rounded shadow-md ${
+                isSoldOut ? "bg-red-600" : "bg-[#B88E2F]"
+              }`}
             >
               {displayBadge}
             </span>
           )}
-          <div className="relative w-full h-full p-8">
+          <div className="relative w-full h-full p-8 min-h-100">
             <Image
               src={processedImageUrl}
               alt={product.nama_produk}
@@ -162,37 +170,102 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
           {/* Menampilkan deskripsi jika ada */}
           {product.deskripsi && (
-            <p className="text-gray-400 text-sm mt-2 mb-4 leading-relaxed line-clamp-3">
+            <p className="text-gray-400 text-sm mt-2 mb-6 leading-relaxed line-clamp-3">
               {product.deskripsi}
             </p>
           )}
 
-          <div className="grid grid-cols-2 gap-4 mb-8 text-gray-300 mt-4 bg-[#121212] p-4 rounded-xl border border-gray-800">
-            <div className="flex flex-col">
-              <span className="text-gray-500 text-xs mb-1 uppercase tracking-wider font-bold">
-                Size
-              </span>
-              <span className="font-medium text-white">{product.size}</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-gray-500 text-xs mb-1 uppercase tracking-wider font-bold">
-                Kondisi
-              </span>
-              <span className="font-medium text-white">{product.kondisi}</span>
-            </div>
+          {/* Harga */}
+          <div className="text-4xl font-bold text-[#B88E2F] mb-6">
+            {formatRupiah(Number(product.harga))}
           </div>
 
-          <div className="text-4xl font-bold text-[#B88E2F] mb-8">
-            {formatRupiah(Number(product.harga))}
+          <div className="bg-[#121212] p-5 rounded-xl border border-gray-800 mb-8 space-y-6">
+            {/* AREA PEMILIHAN UKURAN DINAMIS */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm text-gray-400 font-bold uppercase tracking-wider">
+                  Pilih Ukuran
+                </span>
+                {selectedSize && (
+                  <span className="text-xs font-medium text-[#B88E2F]">
+                    Sisa Stok:{" "}
+                    {
+                      product.sizes?.find((s: any) => s.size === selectedSize)
+                        ?.stock
+                    }
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {product.sizes && product.sizes.length > 0 ? (
+                  product.sizes.map((sizeObj: any) => {
+                    const isOutOfStock = sizeObj.stock <= 0;
+                    const isSelected = selectedSize === sizeObj.size;
+
+                    return (
+                      <button
+                        key={sizeObj.id}
+                        onClick={() => setSelectedSize(sizeObj.size)}
+                        disabled={isOutOfStock}
+                        // Sedikit penyesuaian padding agar pas menampung 2 baris teks
+                        className={`relative min-w-16 px-3 py-2 rounded-lg transition-all flex flex-col items-center justify-center ${
+                          isOutOfStock
+                            ? "border border-gray-800 bg-gray-900 text-gray-600 cursor-not-allowed overflow-hidden"
+                            : isSelected
+                              ? "border border-[#B88E2F] bg-[#B88E2F]/10 text-[#B88E2F] shadow-[0_0_10px_rgba(184,142,47,0.2)]"
+                              : "border border-gray-700 bg-[#1A1A1A] text-gray-300 hover:border-gray-500 hover:bg-[#222]"
+                        }`}
+                      >
+                        {/* Baris Atas: Nama Ukuran */}
+                        <span className="font-bold text-base leading-none mb-1">
+                          {sizeObj.size}
+                        </span>
+
+                        {/* Baris Bawah: Info Stok */}
+                        <span
+                          className={`text-[10px] leading-none ${isOutOfStock ? "text-red-500/70 font-semibold" : "opacity-80"}`}
+                        >
+                          {isOutOfStock ? "Habis" : `Stok: ${sizeObj.stock}`}
+                        </span>
+
+                        {/* Efek Garis Coret Jika Habis */}
+                        {isOutOfStock && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-[120%] h-[1.5px] bg-gray-700 -rotate-12 absolute"></div>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })
+                ) : (
+                  <span className="text-sm text-red-500 italic">
+                    Data ukuran tidak tersedia
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* AREA KONDISI */}
+            <div className="pt-4 border-t border-gray-800">
+              <span className="text-sm text-gray-400 font-bold uppercase tracking-wider block mb-2">
+                Kondisi Barang
+              </span>
+              <span className="inline-block px-4 py-1.5 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg text-sm font-bold">
+                {product.kondisi}
+              </span>
+            </div>
           </div>
 
           {/* Tombol Aksi */}
           <div className="flex flex-col space-y-3 mb-8">
             <button
               onClick={handleAddToCart}
-              disabled={isSoldOut}
+              // Tombol keranjang nonaktif jika (produk Sold Out) ATAU (Belum pilih ukuran)
+              disabled={isSoldOut || !selectedSize}
               className={`w-full font-bold py-4 rounded-xl flex items-center justify-center transition-all ${
-                isSoldOut
+                isSoldOut || !selectedSize
                   ? "bg-gray-800 text-gray-500 cursor-not-allowed"
                   : isAdded
                     ? "bg-green-600 text-white"
@@ -200,7 +273,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               }`}
             >
               {isSoldOut ? (
-                <>Maaf, Sepatu Sudah Terjual</>
+                <>Maaf, Sepatu Sudah Terjual Habis</>
+              ) : !selectedSize ? (
+                <>Pilih Ukuran Terlebih Dahulu</>
               ) : isAdded ? (
                 <>
                   <CheckCircle size={20} className="mr-2" /> Berhasil

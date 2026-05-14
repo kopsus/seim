@@ -2,10 +2,10 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export interface CartItem {
-  id: number | string;
+  id: string;
   name: string;
   price: number;
-  size: number;
+  size: string;
   imageUrl: string;
   quantity: number;
 }
@@ -13,9 +13,9 @@ export interface CartItem {
 interface CartState {
   items: CartItem[];
   addItem: (item: Omit<CartItem, "quantity">) => void;
-  removeItem: (id: number | string) => void;
-  increaseQuantity: (id: number | string) => void;
-  decreaseQuantity: (id: number | string) => void;
+  removeItem: (id: string, size: string) => void;
+  increaseQuantity: (id: string, size: string) => void;
+  decreaseQuantity: (id: string, size: string) => void;
   clearCart: () => void;
 }
 
@@ -27,13 +27,13 @@ export const useCartStore = create<CartState>()(
       addItem: (newItem) =>
         set((state) => {
           const existingItem = state.items.find(
-            (item) => item.id === newItem.id,
+            (item) => item.id === newItem.id && item.size === newItem.size,
           );
 
           if (existingItem) {
             return {
               items: state.items.map((item) =>
-                item.id === newItem.id
+                item.id === newItem.id && item.size === newItem.size
                   ? { ...item, quantity: item.quantity + 1 }
                   : item,
               ),
@@ -42,22 +42,26 @@ export const useCartStore = create<CartState>()(
           return { items: [...state.items, { ...newItem, quantity: 1 }] };
         }),
 
-      removeItem: (id) =>
+      removeItem: (id, size) =>
         set((state) => ({
-          items: state.items.filter((item) => item.id !== id),
-        })),
-
-      increaseQuantity: (id) =>
-        set((state) => ({
-          items: state.items.map((item) =>
-            item.id === id ? { ...item, quantity: item.quantity + 1 } : item,
+          items: state.items.filter(
+            (item) => !(item.id === id && item.size === size),
           ),
         })),
 
-      decreaseQuantity: (id) =>
+      increaseQuantity: (id, size) =>
         set((state) => ({
           items: state.items.map((item) =>
-            item.id === id && item.quantity > 1
+            item.id === id && item.size === size
+              ? { ...item, quantity: item.quantity + 1 }
+              : item,
+          ),
+        })),
+
+      decreaseQuantity: (id, size) =>
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === id && item.size === size && item.quantity > 1
               ? { ...item, quantity: item.quantity - 1 }
               : item,
           ),
