@@ -223,8 +223,8 @@ export default function ModalDetailOrder({
                           </p>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-white text-center">
-                        {item.product?.size}
+                      <td className="px-4 py-3 text-center font-bold text-[#B88E2F]">
+                        {item.size || "-"}
                       </td>
                       <td className="px-4 py-3 text-white text-right font-medium">
                         {formatRupiah(Number(item.harga_saat_beli))}

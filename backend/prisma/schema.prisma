@@ -122,14 +122,16 @@ model Order {
 
 // 5. Tabel Order_Items (Isi Keranjang)
 model OrderItem {
-  id             Int     @id @default(autoincrement())
-  order_id       String
-  product_id     String
+  id              Int     @id @default(autoincrement())
+  order_id        String
+  product_id      String
   harga_saat_beli Decimal @db.Decimal(10, 2)
 
+  size            String
+
   // Relasi
-  order          Order   @relation(fields: [order_id], references: [id])
-  product        Product @relation(fields: [product_id], references: [id])
+  order           Order   @relation(fields: [order_id], references: [id])
+  product         Product @relation(fields: [product_id], references: [id])
 }
 
 model Announcement {

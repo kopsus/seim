@@ -22,8 +22,13 @@ export const checkoutSchema = z
 
     codDate: z.string().optional(),
 
-    productIds: z
-      .array(z.number(), { message: "Product IDs are required" })
+    items: z
+      .array(
+        z.object({
+          productId: z.string({ message: "Product ID is required" }),
+          size: z.string({ message: "Size is required" }),
+        }),
+      )
       .min(1, "You must select at least one product to checkout"),
   })
   .refine(

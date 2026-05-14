@@ -11,28 +11,77 @@ export const checkout = async (req: Request, res: Response): Promise<void> => {
       customerAddress,
       paymentMethod,
       codDate,
-      productIds,
+      items,
     } = req.body;
 
+    // Validasi input awal
+    if (!items || items.length === 0) {
+      res.status(400).json({ message: "Keranjang belanja kosong." });
+      return;
+    }
+
     const result = await prisma.$transaction(async (tx) => {
-      const products = await tx.product.findMany({
-        where: {
-          id: { in: productIds },
-        },
-      });
+      let totalAmount = 0;
+      const orderItemsData = [];
 
-      if (products.length !== productIds.length) {
-        throw new Error("Some products were not found.");
-      }
-      const isAllReady = products.every((p) => p.status === "READY");
-      if (!isAllReady) {
-        throw new Error("One or more products are already SOLD.");
-      }
+      // 1. Looping setiap barang yang dibeli untuk validasi dan update stok
+      for (const item of items) {
+        // Cari produk utamanya untuk mendapatkan harga
+        const product = await tx.product.findUnique({
+          where: { id: item.productId },
+          include: { sizes: true },
+        });
 
-      const totalAmount = products.reduce(
-        (sum, product) => sum + Number(product.harga),
-        0,
-      );
+        if (!product) {
+          throw new Error(
+            `Produk dengan ID ${item.productId} tidak ditemukan.`,
+          );
+        }
+
+        // Cari varian ukuran yang spesifik
+        const productSize = product.sizes.find((s) => s.size === item.size);
+
+        if (!productSize) {
+          throw new Error(
+            `Ukuran ${item.size} untuk produk ${product.nama_produk} tidak valid.`,
+          );
+        }
+
+        if (productSize.stock <= 0) {
+          throw new Error(
+            `Maaf, stok untuk ${product.nama_produk} ukuran ${item.size} sudah habis.`,
+          );
+        }
+
+        // 2. Kurangi stok ukuran tersebut
+        const updatedSize = await tx.productSize.update({
+          where: { id: productSize.id },
+          data: { stock: productSize.stock - 1 },
+        });
+
+        // 3. Cek apakah setelah dibeli ini, semua stok ukuran produk tersebut menjadi habis (0)
+        // Kita hitung total stok dari array product.sizes yang lama, dikurangi 1 (yang baru saja dibeli)
+        const currentTotalStock = product.sizes.reduce(
+          (acc, curr) => acc + curr.stock,
+          0,
+        );
+        const newTotalStock = currentTotalStock - 1;
+
+        if (newTotalStock <= 0) {
+          await tx.product.update({
+            where: { id: product.id },
+            data: { status: "SOLD" },
+          });
+        }
+
+        totalAmount += Number(product.harga);
+
+        orderItemsData.push({
+          product_id: product.id,
+          harga_saat_beli: product.harga,
+          size: item.size, // <-- KITA SIMPAN UKURAN DI SINI
+        });
+      }
 
       const customer = await tx.customer.create({
         data: {
@@ -49,17 +98,17 @@ export const checkout = async (req: Request, res: Response): Promise<void> => {
           metode_pembayaran: paymentMethod,
           tanggal_cod:
             paymentMethod === "COD" && codDate ? new Date(codDate) : null,
+          status_order: "PENDING",
         },
       });
 
-      const orderItemsData = products.map((product) => ({
+      const finalOrderItems = orderItemsData.map((itemData) => ({
+        ...itemData,
         order_id: order.id,
-        product_id: product.id,
-        harga_saat_beli: product.harga,
       }));
 
       await tx.orderItem.createMany({
-        data: orderItemsData,
+        data: finalOrderItems,
       });
 
       return order;
@@ -73,7 +122,7 @@ export const checkout = async (req: Request, res: Response): Promise<void> => {
     console.error("Checkout Error:", error);
     res.status(400).json({
       message: "Checkout failed",
-      error: error.message || error,
+      error: error.message || "Terjadi kesalahan saat memproses pesanan.",
     });
   }
 };
