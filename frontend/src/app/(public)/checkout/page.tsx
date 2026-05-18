@@ -340,7 +340,7 @@ export default function CheckoutPage() {
                   Transfer ke Rekening SEIM:
                 </p>
                 <p className="text-xs text-gray-400 mb-4">
-                  BCA 1234-5678-90 a/n SEIM STORE
+                  035701042306504 BRI a/n Afden Mahyeda
                 </p>
 
                 <label

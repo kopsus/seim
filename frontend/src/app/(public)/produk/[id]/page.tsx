@@ -291,7 +291,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
             {/* Link langsung ke WhatsApp Kasir */}
             <a
-              href={`https://wa.me/6281234567890?text=${waText}`}
+              href={`https://wa.me/6285762172171?text=${waText}`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full bg-[#0A0A0A] hover:bg-[#121212] text-white font-bold py-4 border border-gray-700 hover:border-gray-500 rounded-xl flex items-center justify-center transition-colors"

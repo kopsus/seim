@@ -108,7 +108,10 @@ export default function ModalDetailOrder({
               SEIM STORE
             </h2>
             <p className="text-xs mt-1">Original Shoes & Apparel</p>
-            <p className="text-xs">Jl. Sneaker No. 1, Jakarta</p>
+            <p className="text-xs">
+              Dusun III Sidorejo, RT/RW 05/03 Sidorejo, Kecamatan Bangunrejo,
+              Kabupaten Lampung Tengah, Lampung 34173
+            </p>
           </div>
 
           {/* Info Transaksi */}
@@ -175,7 +178,7 @@ export default function ModalDetailOrder({
           <div className="text-center text-xs">
             <p className="font-bold italic">Terima Kasih!</p>
             <p className="mt-1">Pesanan Anda sedang kami siapkan.</p>
-            <p className="mt-1">IG: @seim.store | WA: 08123456789</p>
+            <p className="mt-1">IG: @seim.store | WA: 6285762172171</p>
           </div>
         </div>
       </div>
