@@ -76,13 +76,26 @@ export default function ModalAddProduk({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
+      const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-      setPhotos((prev) => [...prev, ...selectedFiles]);
+      const validFiles = selectedFiles.filter((file) => {
+        if (file.size > MAX_FILE_SIZE) {
+          alert(
+            `File "${file.name}" terlalu besar! Maksimal ukuran file adalah 5MB.`,
+          );
+          return false;
+        }
+        return true;
+      });
 
-      const newPreviews = selectedFiles.map((file) =>
-        URL.createObjectURL(file),
-      );
-      setPreviewUrls((prev) => [...prev, ...newPreviews]);
+      if (validFiles.length > 0) {
+        setPhotos((prev) => [...prev, ...validFiles]);
+
+        const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
+        setPreviewUrls((prev) => [...prev, ...newPreviews]);
+      }
+
+      e.target.value = "";
     }
   };
 
