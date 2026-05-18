@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import {
   X,
@@ -11,10 +11,12 @@ import {
   CreditCard,
   ExternalLink,
   Calendar,
+  Download,
 } from "lucide-react";
 import { formatRupiah } from "@/utils/formatRupiah";
 import { getImageUrl } from "@/utils/getImageUrl";
 import axiosInstance from "@/lib/axios";
+import html2canvas from "html2canvas";
 
 interface ModalDetailOrderProps {
   isOpen: boolean;
@@ -30,6 +32,7 @@ export default function ModalDetailOrder({
   onSuccess,
 }: ModalDetailOrderProps) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const receiptRef = useRef<HTMLDivElement>(null); // Referensi untuk menangkap struk HTML
 
   if (!isOpen || !order) return null;
 
@@ -52,6 +55,31 @@ export default function ModalDetailOrder({
     }
   };
 
+  // Fungsi untuk mengubah elemen HTML Struk menjadi Gambar PNG
+  const handleDownloadReceipt = async () => {
+    if (!receiptRef.current) return;
+    try {
+      // html2canvas mengambil 'screenshot' dari elemen
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 2, // Agar hasil gambarnya HD
+        backgroundColor: "#ffffff", // Background struk warna putih
+      });
+
+      const image = canvas.toDataURL("image/png");
+
+      // Membuat simulasi klik download
+      const link = document.createElement("a");
+      link.href = image;
+      link.download = `Struk_SEIM_${order.id.split("-")[0]}.png`;
+      link.click();
+    } catch (error) {
+      console.error("Gagal membuat struk", error);
+      alert(
+        "Gagal men-download struk. Pastikan perangkat Anda mendukung canvas.",
+      );
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Intl.DateTimeFormat("id-ID", {
       day: "2-digit",
@@ -64,6 +92,95 @@ export default function ModalDetailOrder({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      {/* ========================================================
+        AREA STRUK DIGITAL TERSEMBUNYI (Hanya untuk di-download) 
+        Kita geser jauh dari layar (-9999px) agar tidak merusak UI Modal
+        ========================================================
+      */}
+      <div className="absolute -left-2499.75 top-0">
+        <div
+          ref={receiptRef}
+          className="bg-white text-black p-6 w-87.5 font-mono text-sm leading-relaxed"
+        >
+          {/* Header Struk */}
+          <div className="text-center mb-4 border-b-2 border-black border-dashed pb-4">
+            <h2 className="text-2xl font-bold uppercase tracking-widest">
+              SEIM STORE
+            </h2>
+            <p className="text-xs mt-1">Original Shoes & Apparel</p>
+            <p className="text-xs">Jl. Sneaker No. 1, Jakarta</p>
+          </div>
+
+          {/* Info Transaksi */}
+          <div className="mb-4 text-xs space-y-1 border-b-2 border-black border-dashed pb-4">
+            <p>
+              <span className="font-bold">Order ID:</span>{" "}
+              {order.id.split("-")[0]}
+            </p>
+            <p>
+              <span className="font-bold">Tanggal:</span>{" "}
+              {formatDate(order.created_at || new Date().toISOString())}
+            </p>
+            <p>
+              <span className="font-bold">Pelanggan:</span>{" "}
+              {order.customer?.nama}
+            </p>
+            <p>
+              <span className="font-bold">WhatsApp:</span>{" "}
+              {order.customer?.no_whatsapp}
+            </p>
+            <p>
+              <span className="font-bold">Metode:</span>{" "}
+              {order.metode_pembayaran}
+            </p>
+          </div>
+
+          {/* Detail Item */}
+          <div className="mb-4">
+            <p className="font-bold text-xs mb-2">DETAIL PESANAN :</p>
+            {order.items?.map((item: any) => (
+              <div key={item.id} className="flex justify-between mb-3 text-xs">
+                <div className="w-2/3 pr-2">
+                  <p className="font-bold uppercase leading-tight">
+                    {item.product?.nama_produk}
+                  </p>
+                  <p className="text-[10px]">
+                    Size: {item.size || "-"} | {item.product?.kondisi}
+                  </p>
+                </div>
+                <div className="w-1/3 text-right">
+                  <p>{formatRupiah(Number(item.harga_saat_beli))}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Total Tagihan */}
+          <div className="border-t-2 border-black border-dashed pt-4 mb-6">
+            <div className="flex justify-between font-bold text-sm">
+              <p>TOTAL TAGIHAN</p>
+              <p>{formatRupiah(Number(order.total_harga))}</p>
+            </div>
+            <div className="flex justify-between text-xs mt-1">
+              <p>STATUS</p>
+              <p className="uppercase">
+                {order.status_order === "PENDING"
+                  ? "BELUM LUNAS"
+                  : "LUNAS (PROSES)"}
+              </p>
+            </div>
+          </div>
+
+          {/* Footer Struk */}
+          <div className="text-center text-xs">
+            <p className="font-bold italic">Terima Kasih!</p>
+            <p className="mt-1">Pesanan Anda sedang kami siapkan.</p>
+            <p className="mt-1">IG: @seim.store | WA: 08123456789</p>
+          </div>
+        </div>
+      </div>
+      {/* ======================================================== */}
+
       <div
         className="absolute inset-0 bg-black bg-opacity-70 backdrop-blur-sm"
         onClick={onClose}
@@ -71,14 +188,28 @@ export default function ModalDetailOrder({
 
       <div className="bg-[#1A1A1A] border border-gray-800 rounded-2xl w-full max-w-4xl relative z-10 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between p-5 border-b border-gray-800 bg-[#121212]">
-          <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              Detail Pesanan
-            </h2>
-            <p className="text-xs text-gray-500 font-mono mt-1">
-              ID: {order.id}
-            </p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                Detail Pesanan
+              </h2>
+              <p className="text-xs text-gray-500 font-mono mt-1">
+                ID: {order.id}
+              </p>
+            </div>
+
+            {/* TOMBOL DOWNLOAD STRUK DI HEADER (Muncul Jika PROSES/SELESAI) */}
+            {(order.status_order === "DIPROSES" ||
+              order.status_order === "SELESAI") && (
+              <button
+                onClick={handleDownloadReceipt}
+                className="hidden md:flex items-center gap-2 ml-4 bg-[#B88E2F]/20 text-[#B88E2F] hover:bg-[#B88E2F] hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-[#B88E2F]/30"
+              >
+                <Download size={14} /> Cetak Struk
+              </button>
+            )}
           </div>
+
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white p-1"
@@ -88,6 +219,17 @@ export default function ModalDetailOrder({
         </div>
 
         <div className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
+          {/* Tombol Cetak Struk untuk Mobile */}
+          {(order.status_order === "DIPROSES" ||
+            order.status_order === "SELESAI") && (
+            <button
+              onClick={handleDownloadReceipt}
+              className="md:hidden flex items-center justify-center gap-2 w-full bg-[#B88E2F]/20 text-[#B88E2F] hover:bg-[#B88E2F] hover:text-white px-4 py-3 rounded-xl text-sm font-bold transition-colors border border-[#B88E2F]/30"
+            >
+              <Download size={18} /> Download Struk Pembelian
+            </button>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Kartu Informasi Pelanggan */}
             <div className="bg-[#0A0A0A] p-5 rounded-xl border border-gray-800">

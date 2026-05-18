@@ -6,7 +6,6 @@ import {
   Home,
   Library,
   Layers,
-  Tag,
   HelpCircle,
   Info,
   Phone,
@@ -120,14 +119,14 @@ export default function Sidebar({
 
           <div className="border-t border-gray-800 my-4" />
 
-          <Link
+          {/* <Link
             href="/promo"
             onClick={onClose}
             className={getSubMenuClass("/promo")}
           >
             <Tag size={18} />
             <span className="text-sm">Promo</span>
-          </Link>
+          </Link> */}
           <Link
             href="/cara-order"
             onClick={onClose}
