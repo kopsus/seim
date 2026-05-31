@@ -4,7 +4,6 @@ import {
   createUser,
   updateUser,
   deleteUser,
-  changePassword,
   getProfile,
 } from "../controllers/userController";
 import {
@@ -18,12 +17,6 @@ import { validateBody } from "../middleware/validationMiddleware";
 const router = Router();
 
 router.get("/profile", verifyToken, getProfile);
-router.put(
-  "/change-password",
-  verifyToken,
-  validateBody(changePasswordSchema),
-  changePassword,
-);
 
 router.use(verifyToken, authorizeRoles("ADMIN"));
 
