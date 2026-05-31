@@ -92,11 +92,6 @@ export default function ModalDetailOrder({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      {/* ========================================================
-        AREA STRUK DIGITAL TERSEMBUNYI (Hanya untuk di-download) 
-        Kita geser jauh dari layar (-9999px) agar tidak merusak UI Modal
-        ========================================================
-      */}
       <div className="absolute -left-2499.75 top-0">
         <div
           ref={receiptRef}

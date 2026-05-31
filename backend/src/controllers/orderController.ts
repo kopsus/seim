@@ -14,7 +14,6 @@ export const checkout = async (req: Request, res: Response): Promise<void> => {
       items,
     } = req.body;
 
-    // Validasi input awal
     if (!items || items.length === 0) {
       res.status(400).json({ message: "Keranjang belanja kosong." });
       return;
@@ -24,9 +23,7 @@ export const checkout = async (req: Request, res: Response): Promise<void> => {
       let totalAmount = 0;
       const orderItemsData = [];
 
-      // 1. Looping setiap barang yang dibeli untuk validasi dan update stok
       for (const item of items) {
-        // Cari produk utamanya untuk mendapatkan harga
         const product = await tx.product.findUnique({
           where: { id: item.productId },
           include: { sizes: true },
@@ -38,7 +35,6 @@ export const checkout = async (req: Request, res: Response): Promise<void> => {
           );
         }
 
-        // Cari varian ukuran yang spesifik
         const productSize = product.sizes.find((s) => s.size === item.size);
 
         if (!productSize) {
@@ -53,14 +49,11 @@ export const checkout = async (req: Request, res: Response): Promise<void> => {
           );
         }
 
-        // 2. Kurangi stok ukuran tersebut
         const updatedSize = await tx.productSize.update({
           where: { id: productSize.id },
           data: { stock: productSize.stock - 1 },
         });
 
-        // 3. Cek apakah setelah dibeli ini, semua stok ukuran produk tersebut menjadi habis (0)
-        // Kita hitung total stok dari array product.sizes yang lama, dikurangi 1 (yang baru saja dibeli)
         const currentTotalStock = product.sizes.reduce(
           (acc, curr) => acc + curr.stock,
           0,
@@ -79,7 +72,7 @@ export const checkout = async (req: Request, res: Response): Promise<void> => {
         orderItemsData.push({
           product_id: product.id,
           harga_saat_beli: product.harga,
-          size: item.size, // <-- KITA SIMPAN UKURAN DI SINI
+          size: item.size,
         });
       }
 
@@ -275,19 +268,27 @@ export const updateOrderStatus = async (
         data: { status_order: status },
       });
 
-      if (status === "SELESAI" || status === "BATAL") {
+      if (status === "BATAL") {
         const orderItems = await tx.orderItem.findMany({
           where: { order_id: orderId },
         });
 
-        const productIds = orderItems.map((item) => item.product_id);
+        for (const item of orderItems) {
+          await tx.productSize.updateMany({
+            where: {
+              product_id: item.product_id,
+              size: item.size,
+            },
+            data: {
+              stock: { increment: 1 },
+            },
+          });
 
-        const targetProductStatus = status === "SELESAI" ? "SOLD" : "READY";
-
-        await tx.product.updateMany({
-          where: { id: { in: productIds } },
-          data: { status: targetProductStatus },
-        });
+          await tx.product.update({
+            where: { id: item.product_id },
+            data: { status: "READY" },
+          });
+        }
       }
 
       return updatedOrder;
