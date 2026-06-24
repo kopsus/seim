@@ -89,6 +89,9 @@ export const createProduct = async (
   try {
     const categoryId = parseInt(req.body.categoryId as string, 10);
     const price = parseFloat(req.body.price as string);
+    const priceDiscount = req.body.priceDiscount
+      ? parseFloat(req.body.priceDiscount as string)
+      : null;
     const { name, description, condition, status, badge } = req.body;
 
     const files = req.files as Express.Multer.File[];
@@ -146,6 +149,7 @@ export const createProduct = async (
         nama_produk: name,
         deskripsi: description,
         harga: price,
+        harga_diskon: priceDiscount,
         kondisi: condition,
         status: status || "READY",
         badge: badge,
@@ -194,6 +198,9 @@ export const updateProduct = async (
       : undefined;
     const price = req.body.price
       ? parseFloat(req.body.price as string)
+      : undefined;
+    const priceDiscount = req.body.priceDiscount
+      ? parseFloat(req.body.priceDiscount as string)
       : undefined;
 
     const { name, description, condition, status, badge } = req.body;
@@ -264,6 +271,7 @@ export const updateProduct = async (
         deskripsi: description || existingProduct.deskripsi,
         kondisi: condition || existingProduct.kondisi,
         harga: price || existingProduct.harga,
+        harga_diskon: priceDiscount || existingProduct.harga_diskon,
         status: status || existingProduct.status,
         badge: badge || existingProduct.badge,
         foto: finalPhotoPaths,

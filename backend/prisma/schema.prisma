@@ -70,24 +70,25 @@ model Kategori {
 
 // 3. Tabel Products (Katalog Sepatu)
 model Product {
-  id          String       @id @default(uuid())
-  kategori_id Int          
-  nama_produk String
-  deskripsi   String       @db.Text
-  kondisi     String
-  harga       Decimal      @db.Decimal(10, 2)
-  status      StatusProduk @default(READY)
-  badge       String?      
-  foto        Json         
+  id                 String       @id @default(uuid())
+  kategori_id        Int          
+  nama_produk        String
+  deskripsi          String       @db.Text
+  kondisi            String
+  harga              Decimal      @db.Decimal(10, 2)
+  harga_diskon       Decimal?     @db.Decimal(10, 2)
+  status             StatusProduk @default(READY)
+  badge              String?      
+  foto               Json         
   
-  sizes       ProductSize[]
+  sizes              ProductSize[]
 
   // Relasi ke Tabel Kategori
-  kategori    Kategori     @relation(fields: [kategori_id], references: [id])
-  order_items OrderItem[]
+  kategori           Kategori     @relation(fields: [kategori_id], references: [id])
+  order_items        OrderItem[]
 
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
+  created_at         DateTime     @default(now())
+  updated_at         DateTime     @updatedAt
 }
 
 model ProductSize {

@@ -8,6 +8,7 @@ export type Product = {
   kondisi: string;
   sizes: string[];
   harga: string;
+  harga_diskon: string;
   status: string;
   badge?: "NEW" | "SOLD OUT" | null;
   foto: string[];

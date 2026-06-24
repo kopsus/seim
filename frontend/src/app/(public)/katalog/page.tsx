@@ -148,6 +148,7 @@ export default function KatalogPage() {
               id={product.id}
               name={product.nama_produk}
               price={Number(product.harga)}
+              priceDiscount={Number(product.harga_diskon)}
               sizes={product.sizes || []}
               condition={product.kondisi}
               imageUrl={getImageUrl(product.foto)}

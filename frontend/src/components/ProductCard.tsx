@@ -9,6 +9,7 @@ interface ProductCardProps {
   id: string; // Diubah jadi string menyesuaikan UUID Prisma
   name: string;
   price: number;
+  priceDiscount?: number; // Menambahkan properti harga diskon
   sizes: any[]; // Menerima array ukuran dari backend
   condition: string;
   imageUrl: string;
@@ -19,6 +20,7 @@ export default function ProductCard({
   id,
   name,
   price,
+  priceDiscount,
   sizes,
   condition,
   imageUrl,
@@ -82,9 +84,25 @@ export default function ProductCard({
         </p>
 
         <div className="flex items-center justify-between mt-auto pt-2">
-          <span className="font-bold text-sm md:text-xl text-white truncate mr-2">
-            {formatRupiah(price)}
-          </span>
+          <div className="flex flex-col justify-center min-h-12">
+            {/* Cek apakah ada harga diskon yang valid (lebih dari 0) */}
+            {priceDiscount && priceDiscount > 0 ? (
+              <>
+                {/* Tampilan Jika ADA Diskon */}
+                <span className="font-bold text-xs md:text-sm text-red-500 line-through leading-tight">
+                  {formatRupiah(price)}
+                </span>
+                <span className="font-bold text-sm md:text-xl text-white truncate mr-2">
+                  {formatRupiah(priceDiscount)}
+                </span>
+              </>
+            ) : (
+              /* Tampilan Jika TIDAK ADA Diskon */
+              <span className="font-bold text-sm md:text-xl text-white truncate mr-2">
+                {formatRupiah(price)}
+              </span>
+            )}
+          </div>
 
           {/* Tombol Keranjang diarahkan ke Detail Produk agar user pilih size dulu */}
           <Link href={`/produk/${id}`}>

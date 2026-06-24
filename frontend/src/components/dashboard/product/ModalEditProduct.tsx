@@ -23,6 +23,7 @@ export default function ModalEditProduk({
   const [categoryId, setCategoryId] = useState("");
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [priceDiscount, setPriceDiscount] = useState(""); // State untuk harga diskon
   const [description, setDescription] = useState("");
   const [condition, setCondition] = useState("");
   const [status, setStatus] = useState("");
@@ -46,6 +47,7 @@ export default function ModalEditProduk({
         setCategoryId(product.kategori_id?.toString() || "");
         setName(product.nama_produk || "");
         setPrice(product.harga || "");
+        setPriceDiscount(product.harga_diskon?.toString() || "");
         setDescription(product.deskripsi || "");
         setCondition(product.kondisi || "New");
         setStatus(product.status || "READY");
@@ -151,6 +153,7 @@ export default function ModalEditProduk({
       formData.append("categoryId", categoryId);
       formData.append("name", name);
       formData.append("price", price);
+      formData.append("priceDiscount", priceDiscount);
       formData.append("description", description);
       formData.append("condition", condition);
       formData.append("sizes", JSON.stringify(sizes)); // DIKIRIM SEBAGAI STRING JSON
@@ -339,6 +342,18 @@ export default function ModalEditProduk({
                   type="number"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
+                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  Harga Diskon
+                </label>
+                <input
+                  type="number"
+                  value={priceDiscount}
+                  onChange={(e) => setPriceDiscount(e.target.value)}
                   className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
                 />
               </div>

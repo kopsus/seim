@@ -19,6 +19,7 @@ export default function ModalAddProduk({
   const [categoryId, setCategoryId] = useState("");
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [priceDiscount, setPriceDiscount] = useState(""); // State untuk harga diskon
   const [description, setDescription] = useState("");
   const [condition, setCondition] = useState("New");
   // State sizes dipertahankan sebagai array of objects
@@ -129,6 +130,7 @@ export default function ModalAddProduk({
       formData.append("categoryId", categoryId);
       formData.append("name", name);
       formData.append("price", price);
+      formData.append("priceDiscount", priceDiscount);
       formData.append("description", description);
       formData.append("condition", condition);
       formData.append("sizes", JSON.stringify(sizes)); // Dikirim sebagai string JSON
@@ -156,6 +158,7 @@ export default function ModalAddProduk({
   const handleClose = () => {
     setName("");
     setPrice("");
+    setPriceDiscount(""); // Reset harga diskon
     setDescription("");
     setCondition("New");
     setSizes([{ size: "", stock: 0 }]);
@@ -287,6 +290,19 @@ export default function ModalAddProduk({
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="Contoh: 500000"
+                  className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">
+                  Harga Diskon (Rp) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={priceDiscount}
+                  onChange={(e) => setPriceDiscount(e.target.value)}
+                  placeholder="Contoh: 450000"
                   className="w-full bg-[#0A0A0A] text-white border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B88E2F]"
                 />
               </div>
