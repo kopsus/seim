@@ -4,6 +4,7 @@ import {
   deleteOrder,
   getOrderById,
   getOrders,
+  posCheckout,
   updateOrderStatus,
   uploadPaymentReceipt,
 } from "../controllers/orderController";
@@ -31,6 +32,7 @@ router.put(
   authorizeRoles("ADMIN", "KASIR"),
   updateOrderStatus,
 );
+router.post("/pos-checkout", verifyToken, authorizeRoles("KASIR"), posCheckout);
 router.delete("/:id", verifyToken, authorizeRoles("ADMIN"), deleteOrder);
 
 export default router;

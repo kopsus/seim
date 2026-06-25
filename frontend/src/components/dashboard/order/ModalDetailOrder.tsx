@@ -173,7 +173,8 @@ export default function ModalDetailOrder({
           <div className="text-center text-xs">
             <p className="font-bold italic">Terima Kasih!</p>
             <p className="mt-1">Pesanan Anda sedang kami siapkan.</p>
-            <p className="mt-1">IG: @seim.store | WA: 6285762172171</p>
+            <p className="mt-1">IG: @seim.store | WA: +6285762172171</p>
+            <p className="mt-1">seimstore.cloud</p>
           </div>
         </div>
       </div>

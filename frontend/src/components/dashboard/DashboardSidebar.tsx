@@ -12,6 +12,7 @@ import {
   LogOut,
   X,
   Megaphone,
+  CreditCard,
 } from "lucide-react";
 import Cookies from "js-cookie";
 
@@ -149,6 +150,17 @@ export default function DashboardSidebar({
               Operasional
             </p>
           </div>
+
+          {/* {userRole === "KASIR" && ( */}
+          <Link
+            href="/dashboard/transaction"
+            onClick={onClose}
+            className={getMenuClass("/dashboard/transaction")}
+          >
+            <CreditCard size={18} />
+            <span className="text-sm">Transaksi</span>
+          </Link>
+          {/* )} */}
 
           <Link
             href="/dashboard/order"

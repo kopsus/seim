@@ -357,3 +357,124 @@ export const deleteOrder = async (
     res.status(500).json({ message: "Failed to delete order", error });
   }
 };
+
+export const posCheckout = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { items } = req.body; // items dari keranjang kasir: [{ productId, size, quantity }]
+
+    if (!items || items.length === 0) {
+      res.status(400).json({ message: "Keranjang masih kosong." });
+      return;
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Cari atau Buat Data "Pelanggan Offline"
+      let defaultCustomer = await tx.customer.findFirst({
+        where: { no_whatsapp: "0" },
+      });
+
+      if (!defaultCustomer) {
+        defaultCustomer = await tx.customer.create({
+          data: {
+            nama: "Pelanggan Offline (Walk-in)",
+            no_whatsapp: "0",
+            alamat: "Pembelian Langsung di Toko",
+          },
+        });
+      }
+
+      let totalHarga = 0;
+      const orderItemsData: any[] = [];
+
+      // 2. Loop setiap barang di keranjang, cek stok, dan hitung harga
+      for (const item of items) {
+        const qty = item.quantity || 1; // Tangkap jumlah barang yang dibeli
+
+        // Ambil data produk terbaru dari database
+        const product = await tx.product.findUnique({
+          where: { id: item.productId },
+          include: { sizes: true },
+        });
+
+        if (!product) throw new Error(`Produk tidak ditemukan.`);
+
+        // Validasi stok ukuran
+        const sizeData = product.sizes.find((s) => s.size === item.size);
+        if (!sizeData || sizeData.stock < qty) {
+          throw new Error(
+            `Stok tidak cukup untuk ${product.nama_produk} (Size: ${item.size}). Sisa stok: ${sizeData?.stock || 0}`,
+          );
+        }
+
+        // Cek apakah ada harga diskon
+        const finalPrice =
+          product.harga_diskon && Number(product.harga_diskon) > 0
+            ? Number(product.harga_diskon)
+            : Number(product.harga);
+
+        totalHarga += finalPrice * qty;
+
+        // Simpan data orderItem sesuai dengan quantity (jumlah barang)
+        for (let i = 0; i < qty; i++) {
+          orderItemsData.push({
+            product_id: product.id,
+            size: item.size,
+            harga_saat_beli: finalPrice,
+          });
+        }
+
+        // 3. Potong stok berdasarkan quantity
+        await tx.productSize.updateMany({
+          where: { product_id: product.id, size: item.size },
+          data: { stock: { decrement: qty } },
+        });
+
+        // 4. Cek apakah setelah dipotong, semua stok ukuran produk ini habis?
+        // Jika ya, ubah produk menjadi SOLD
+        const remainingSizes = await tx.productSize.findMany({
+          where: { product_id: product.id },
+        });
+
+        const isAllZero = remainingSizes.every((s) => s.stock === 0);
+        if (isAllZero) {
+          await tx.product.update({
+            where: { id: product.id },
+            data: { status: "SOLD" },
+          });
+        }
+      }
+
+      // 5. Buat Data Pesanan (Order) Langsung SELESAI
+      const newOrder = await tx.order.create({
+        data: {
+          customer_id: defaultCustomer.id,
+          total_harga: totalHarga,
+          metode_pembayaran: "COD",
+          status_order: "SELESAI", // Status langsung selesai
+          items: {
+            create: orderItemsData,
+          },
+        },
+        include: {
+          items: { include: { product: true } },
+          customer: true,
+        },
+      });
+
+      return newOrder;
+    });
+
+    res.status(201).json({
+      message: "Transaksi Kasir (POS) berhasil!",
+      data: result,
+    });
+  } catch (error: any) {
+    console.error("POS Checkout Error:", error);
+    res.status(400).json({
+      message: error.message || "Gagal memproses transaksi kasir.",
+    });
+  }
+};
