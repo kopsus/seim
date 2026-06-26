@@ -98,9 +98,17 @@ export default function TransactionPage() {
   // ==========================================
   // 2. STATE & LOGIKA POS KASIR
   // ==========================================
-  const { items, increaseQuantity, decreaseQuantity, removeItem, clearCart } =
-    useCartStore();
+  const {
+    items,
+    increaseQuantity,
+    decreaseQuantity,
+    removeItem,
+    clearCart,
+    addItem,
+  } = useCartStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [posModalProduct, setPosModalProduct] = useState<any>(null);
+  const [selectedSize, setSelectedSize] = useState("");
 
   // Menghitung total harga keranjang
   const totalHarga = items.reduce(
@@ -133,7 +141,7 @@ export default function TransactionPage() {
       };
 
       // Memanggil endpoint khusus POS Kasir
-      await axiosInstance.post("/orders/pos/checkout", payload);
+      await axiosInstance.post("/orders/pos-checkout", payload);
 
       alert("Transaksi berhasil diselesaikan! Stok otomatis terpotong.");
       clearCart();
@@ -145,6 +153,34 @@ export default function TransactionPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleOpenModal = (product: any) => {
+    setPosModalProduct(product);
+    setSelectedSize(""); // Reset size setiap buka produk baru
+  };
+
+  const handleAddToCartPos = () => {
+    if (!selectedSize) {
+      alert("Pilih ukuran terlebih dahulu!");
+      return;
+    }
+
+    // Masukkan ke Zustand Cart Anda
+    addItem({
+      id: posModalProduct.id,
+      name: posModalProduct.nama_produk,
+      price:
+        posModalProduct.harga_diskon > 0
+          ? Number(posModalProduct.harga_diskon)
+          : Number(posModalProduct.harga),
+      size: selectedSize,
+      // Tambahkan imageUrl agar sesuai dengan tipe data CartItem Anda
+      imageUrl: getImageUrl(posModalProduct.foto),
+    });
+
+    // Tutup modal setelah berhasil
+    setPosModalProduct(null);
   };
 
   // ==========================================
@@ -233,6 +269,7 @@ export default function TransactionPage() {
                   condition={product.kondisi}
                   imageUrl={getImageUrl(product.foto)}
                   badge={product.status === "SOLD" ? "SOLD OUT" : product.badge}
+                  onPosClick={() => handleOpenModal(product)}
                 />
               ))}
             </div>
@@ -341,6 +378,72 @@ export default function TransactionPage() {
           </div>
         </div>
       </div>
+
+      {/* ========================================== */}
+      {/* MODAL PILIH UKURAN UNTUK KASIR */}
+      {/* ========================================== */}
+      {posModalProduct && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#1A1A1A] border border-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
+            <h3 className="text-xl font-bold text-white mb-1 line-clamp-1">
+              {posModalProduct.nama_produk}
+            </h3>
+            <p className="text-[#B88E2F] font-bold text-lg mb-6">
+              {formatRupiah(
+                posModalProduct.harga_diskon > 0
+                  ? Number(posModalProduct.harga_diskon)
+                  : Number(posModalProduct.harga),
+              )}
+            </p>
+
+            <div className="mb-6">
+              <p className="text-sm text-gray-400 mb-3">Pilih Ukuran (Size):</p>
+              <div className="flex flex-wrap gap-2">
+                {posModalProduct.sizes?.map((s: any) => {
+                  const isOutOfStock = s.stock <= 0;
+                  const isSelected = selectedSize === s.size;
+
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => setSelectedSize(s.size)}
+                      disabled={isOutOfStock}
+                      className={`relative min-w-[3.5rem] px-3 py-2 rounded-lg transition-all flex flex-col items-center justify-center ${
+                        isOutOfStock
+                          ? "border border-gray-800 bg-gray-900 text-gray-600 cursor-not-allowed"
+                          : isSelected
+                            ? "border border-[#B88E2F] bg-[#B88E2F]/10 text-[#B88E2F] shadow-[0_0_10px_rgba(184,142,47,0.2)]"
+                            : "border border-gray-700 bg-[#0A0A0A] text-gray-300 hover:border-gray-500 hover:bg-[#222]"
+                      }`}
+                    >
+                      <span className="font-bold text-sm">{s.size}</span>
+                      <span className="text-[10px] opacity-70">
+                        {isOutOfStock ? "Habis" : `Stok: ${s.stock}`}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={() => setPosModalProduct(null)}
+                className="flex-1 py-3 px-4 rounded-xl border border-gray-700 text-white font-medium hover:bg-gray-800 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleAddToCartPos}
+                disabled={!selectedSize}
+                className="flex-1 py-3 px-4 rounded-xl bg-[#B88E2F] hover:bg-[#9A7526] disabled:bg-gray-800 disabled:text-gray-500 text-white font-bold transition-colors"
+              >
+                Tambah
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

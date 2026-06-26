@@ -151,16 +151,16 @@ export default function DashboardSidebar({
             </p>
           </div>
 
-          {/* {userRole === "KASIR" && ( */}
-          <Link
-            href="/dashboard/transaction"
-            onClick={onClose}
-            className={getMenuClass("/dashboard/transaction")}
-          >
-            <CreditCard size={18} />
-            <span className="text-sm">Transaksi</span>
-          </Link>
-          {/* )} */}
+          {userRole === "KASIR" && (
+            <Link
+              href="/dashboard/transaction"
+              onClick={onClose}
+              className={getMenuClass("/dashboard/transaction")}
+            >
+              <CreditCard size={18} />
+              <span className="text-sm">Transaksi</span>
+            </Link>
+          )}
 
           <Link
             href="/dashboard/order"
