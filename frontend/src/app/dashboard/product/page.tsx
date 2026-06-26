@@ -84,8 +84,6 @@ export default function ManajemenProdukPage() {
     setIsDeleteModalOpen(true);
   };
 
-  console.log("data products", products);
-
   return (
     <div className="w-full relative">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
