@@ -170,7 +170,7 @@ export default function DashboardUtamaPage() {
           <h2 className="text-lg font-bold text-white">Pesanan Terbaru</h2>
           {/* Ubah href jika rute tabel order Anda berbeda, misalnya /dashboard/pesanan */}
           <Link
-            href="/dashboard/orders"
+            href="/dashboard/order"
             className="text-sm text-[#B88E2F] hover:text-[#9A7526] font-medium flex items-center transition-colors"
           >
             Lihat Semua <ArrowRight size={16} className="ml-1" />

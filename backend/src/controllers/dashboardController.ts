@@ -18,9 +18,17 @@ export const getDashboardStats = async (
       },
     });
 
-    const soldProducts = await prisma.product.count({
-      where: { status: "SOLD" },
+    // -----------------------------------------------------
+    // LOGIKA BARU: Menghitung jumlah barang yang laku terjual
+    // -----------------------------------------------------
+    const soldProducts = await prisma.orderItem.count({
+      where: {
+        order: {
+          status_order: "SELESAI",
+        },
+      },
     });
+    // -----------------------------------------------------
 
     const readyProducts = await prisma.product.count({
       where: { status: "READY" },
@@ -31,7 +39,7 @@ export const getDashboardStats = async (
       data: {
         totalRevenue: Number(totalRevenue),
         pendingOrders,
-        soldProducts,
+        soldProducts, // Sekarang ini berisi total pasang sepatu yang laku
         readyProducts,
       },
     });
