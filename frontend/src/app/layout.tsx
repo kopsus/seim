@@ -14,21 +14,20 @@ const geistMono = Geist_Mono({
 
 // --- BAGIAN METADATA YANG DISESUAIKAN ---
 export const metadata: Metadata = {
-  title: "SEIM Store | Original Shoes & Apparel",
+  title: "SEIM Store | Shoes & Apparel",
   description:
-    "Toko sepatu original, sneakers, dan apparel terbaik dengan harga bersaing. Temukan sepatu impianmu dan belanja dengan aman, mudah, serta terpercaya di SEIM Store.",
+    "Toko sepatu, sneakers, dan apparel terbaik dengan harga bersaing. Temukan sepatu impianmu dan belanja dengan aman, mudah, serta terpercaya di SEIM Store.",
   keywords: [
     "sepatu",
     "sneakers",
     "seim store",
-    "sepatu original",
+    "sepatu",
     "toko sepatu jakarta",
   ],
   authors: [{ name: "SEIM Store" }],
   openGraph: {
-    title: "SEIM Store | Original Shoes & Apparel",
-    description:
-      "Toko sepatu sneakers original terlengkap. Cek katalog kami sekarang!",
+    title: "SEIM Store | Shoes & Apparel",
+    description: "Toko sepatu sneakers terlengkap. Cek katalog kami sekarang!",
     url: "https://seimstore.cloud", // Ganti dengan domain asli Anda nanti jika sudah ada
     siteName: "SEIM Store",
     images: [

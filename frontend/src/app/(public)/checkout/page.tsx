@@ -288,10 +288,10 @@ export default function CheckoutPage() {
                   <h3
                     className={`font-bold ${paymentMethod === "TRANSFER" ? "text-[#B88E2F]" : "text-white"}`}
                   >
-                    Transfer Bank
+                    Scan QRIS
                   </h3>
                   <p className="text-[10px] text-gray-500 mt-1">
-                    Bayar via bank dan upload bukti
+                    Bayar via Qris dan upload bukti
                   </p>
                 </div>
               </button>
@@ -335,16 +335,79 @@ export default function CheckoutPage() {
             )}
 
             {paymentMethod === "TRANSFER" && (
+              // <div className="mt-6 pt-6 border-t border-gray-800">
+              //   <p className="text-sm text-white font-bold mb-1">
+              //     Transfer ke Rekening SEIM:
+              //   </p>
+              //   <p className="text-xs text-gray-400 mb-4">
+              //     035701042306504 BRI a/n Afden Mahyeda
+              //   </p>
+
+              //   <label
+              //     className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl bg-[#0A0A0A] cursor-pointer ${validationErrors.receipt ? "border-red-500" : "border-gray-700 hover:border-[#B88E2F]"}`}
+              //   >
+              //     {receiptPreview ? (
+              //       <div className="relative w-full h-full p-2">
+              //         <Image
+              //           src={receiptPreview}
+              //           alt="Bukti"
+              //           fill
+              //           className="object-contain"
+              //         />
+              //       </div>
+              //     ) : (
+              //       <div className="flex flex-col items-center py-4">
+              //         <Upload className="text-gray-500 mb-2" />
+              //         <span className="text-xs text-gray-500">
+              //           Klik untuk upload bukti transfer
+              //         </span>
+              //       </div>
+              //     )}
+              //     <input
+              //       type="file"
+              //       className="hidden"
+              //       accept="image/*"
+              //       onChange={handleFileChange}
+              //     />
+              //   </label>
+              //   {validationErrors.receipt && (
+              //     <p className="text-red-500 text-xs mt-1 ml-1 text-center">
+              //       {validationErrors.receipt}
+              //     </p>
+              //   )}
+              // </div>
               <div className="mt-6 pt-6 border-t border-gray-800">
-                <p className="text-sm text-white font-bold mb-1">
-                  Transfer ke Rekening SEIM:
-                </p>
-                <p className="text-xs text-gray-400 mb-4">
-                  035701042306504 BRI a/n Afden Mahyeda
+                <div className="flex flex-col items-center mb-6">
+                  <p className="text-sm text-white font-bold mb-1 text-center">
+                    Scan QRIS untuk Pembayaran:
+                  </p>
+                  {/* <p className="text-xs text-gray-400 mb-4 text-center">
+                    a/n SEIM Store
+                  </p> */}
+
+                  {/* Area Gambar QRIS */}
+                  <div className="relative w-48 h-48 md:w-56 md:h-56 bg-white p-2 rounded-xl border-4 border-gray-800 overflow-hidden">
+                    <Image
+                      src="/qris.jpeg" /* Ganti dengan nama file QRIS Anda yang ada di folder public/image */
+                      alt="QRIS Pembayaran SEIM"
+                      fill
+                      className="object-contain"
+                      unoptimized={process.env.NODE_ENV === "development"}
+                    />
+                  </div>
+                </div>
+
+                <p className="text-sm text-white font-bold mb-3 text-center">
+                  Upload Bukti Pembayaran
                 </p>
 
+                {/* Area Upload Bukti Transfer (Tetap sama seperti milik Anda) */}
                 <label
-                  className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl bg-[#0A0A0A] cursor-pointer ${validationErrors.receipt ? "border-red-500" : "border-gray-700 hover:border-[#B88E2F]"}`}
+                  className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl bg-[#0A0A0A] cursor-pointer transition-colors ${
+                    validationErrors.receipt
+                      ? "border-red-500"
+                      : "border-gray-700 hover:border-[#B88E2F]"
+                  }`}
                 >
                   {receiptPreview ? (
                     <div className="relative w-full h-full p-2">
@@ -370,8 +433,9 @@ export default function CheckoutPage() {
                     onChange={handleFileChange}
                   />
                 </label>
+
                 {validationErrors.receipt && (
-                  <p className="text-red-500 text-xs mt-1 ml-1 text-center">
+                  <p className="text-red-500 text-xs mt-2 text-center">
                     {validationErrors.receipt}
                   </p>
                 )}
