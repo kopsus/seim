@@ -120,10 +120,10 @@ export default function HomePage() {
       <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-8 gap-4">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-white uppercase tracking-widest leading-tight">
-            Kualitas Langit
+            Beli Satuan
           </h2>
           <h3 className="text-lg md:text-xl text-gray-400 uppercase tracking-widest leading-tight">
-            Harga Bumi
+            Harga Grosiran
           </h3>
         </div>
 

@@ -25,7 +25,7 @@ export default function TentangKamiPage() {
           <p>
             Visi kami sederhana:{" "}
             <span className="text-[#B88E2F] font-bold italic">
-              Kualitas Langit, Harga Bumi
+              Beli Satuan Harga Grosiran
             </span>
             . Kami ingin kamu bisa melangkah dengan percaya diri menggunakan
             sepatu impianmu tanpa harus menguras dompet.
